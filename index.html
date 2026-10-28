@@ -1,0 +1,3346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>LOOKISM: BATTLE OF GENERATIONS</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Ops+One&family=Inter:wght@400;600;700;900&family=Teko:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --neon-pink: #ff007f;
+      --neon-cyan: #00f0ff;
+      --neon-purple: #9d4edd;
+      --neon-gold: #ffbe0b;
+      --neon-red: #ff2a2a;
+    }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      background-color: #07070c;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+    }
+    .font-title {
+      font-family: 'Black Ops One', cursive;
+      letter-spacing: 0.05em;
+    }
+    .font-hud {
+      font-family: 'Teko', sans-serif;
+      letter-spacing: 0.04em;
+    }
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0f101a;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #3b3f5c;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #ff007f;
+    }
+    /* Neon & Skew UI Effects */
+    .bvn-btn {
+      position: relative;
+      transform: skewX(-10deg);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+      border: 2px solid rgba(255, 255, 255, 0.15);
+      background: linear-gradient(135deg, rgba(20, 22, 36, 0.95), rgba(10, 11, 18, 0.98));
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+    }
+    .bvn-btn:hover {
+      transform: skewX(-10deg) translateY(-3px) scale(1.02);
+      border-color: var(--neon-cyan);
+      box-shadow: 0 0 20px rgba(0, 240, 255, 0.4), inset 0 0 12px rgba(0, 240, 255, 0.2);
+    }
+    .bvn-btn:active {
+      transform: skewX(-10deg) translateY(1px) scale(0.99);
+    }
+    .bvn-btn-inner {
+      transform: skewX(10deg);
+    }
+    .char-card {
+      transition: all 0.15s ease;
+      border: 2px solid rgba(255,255,255,0.12);
+      background: linear-gradient(180deg, rgba(22,25,40,0.9) 0%, rgba(10,12,20,0.95) 100%);
+    }
+    .char-card:hover {
+      transform: translateY(-2px);
+      border-color: rgba(255,255,255,0.5);
+    }
+    .char-card.selected-p1 {
+      border-color: #00f0ff !important;
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.55), inset 0 0 10px rgba(0, 240, 255, 0.25);
+    }
+    .char-card.selected-p2 {
+      border-color: #ff2a55 !important;
+      box-shadow: 0 0 15px rgba(255, 42, 85, 0.55), inset 0 0 10px rgba(255, 42, 85, 0.25);
+    }
+    .char-card.selected-both {
+      border-image: linear-gradient(90deg, #00f0ff 50%, #ff2a55 50%) 1 !important;
+      box-shadow: 0 0 18px rgba(180, 100, 255, 0.6);
+    }
+    .hp-bar-fill {
+      transition: width 0.08s linear;
+    }
+    .hp-bar-drain {
+      transition: width 0.55s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    /* Ultimate Cut-in Animation */
+    @keyframes cutinSlide {
+      0% { transform: translateX(-100%) skewX(-12deg); opacity: 0; }
+      15% { transform: translateX(0%) skewX(-12deg); opacity: 1; }
+      85% { transform: translateX(0%) skewX(-12deg); opacity: 1; }
+      100% { transform: translateX(100%) skewX(-12deg); opacity: 0; }
+    }
+    .cutin-active {
+      animation: cutinSlide 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .bg-grid-pattern {
+      background-image: 
+        linear-gradient(to right, rgba(255,255,255,0.03) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(255,255,255,0.03) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+  </style>
+</head>
+<body class="bg-grid-pattern select-none relative w-screen h-screen overflow-hidden flex flex-col">
+
+  <!-- ==================== 1. MAIN TITLE & MODE SELECTION SCREEN ==================== -->
+  <div id="screen-title" class="absolute inset-0 z-40 flex flex-col items-center justify-between p-6 bg-gradient-to-b from-[#090a12]/95 via-[#0c0e1a]/90 to-[#06070c]/98">
+    <!-- Background Animated Canvas for Title Screen Ambience -->
+    <canvas id="title-bg-canvas" class="absolute inset-0 w-full h-full pointer-events-none opacity-45"></canvas>
+
+    <!-- Top Header / Audio Toggle -->
+    <div class="relative z-10 w-full max-w-7xl flex items-center justify-between">
+      <div class="flex items-center gap-2">
+        <span class="px-2.5 py-1 rounded bg-pink-600/20 border border-pink-500/40 text-pink-400 text-xs font-bold tracking-widest uppercase">PTJ UNIVERSE x BVN ENGINE</span>
+        <span class="px-2.5 py-1 rounded bg-cyan-600/20 border border-cyan-500/40 text-cyan-300 text-xs font-bold tracking-widest uppercase">26 FIGHTERS • 3 GENERATIONS</span>
+      </div>
+      <button id="btn-sound-toggle" class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 border border-slate-600 text-xs font-semibold flex items-center gap-2 transition">
+        <span id="sound-icon">🔊</span> <span id="sound-text">SFX: ON</span>
+      </button>
+    </div>
+
+    <!-- Center Logo & Mode Buttons -->
+    <div class="relative z-10 flex flex-col items-center text-center my-auto max-w-4xl w-full px-4">
+      <div class="text-xs md:text-sm font-bold tracking-[0.35em] text-cyan-400 uppercase mb-1 drop-shadow">PRE-GENERATION • KINGS OF GEN 1 • ALLIED & 4 CREWS</div>
+      <h1 class="font-title text-5xl sm:text-7xl md:text-8xl tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-white via-slate-100 to-cyan-300 drop-shadow-[0_5px_25px_rgba(0,240,255,0.35)] leading-none">
+        LOOKISM
+      </h1>
+      <div class="font-title text-xl sm:text-3xl md:text-4xl text-transparent bg-clip-text bg-gradient-to-r from-pink-500 via-purple-400 to-amber-400 tracking-widest -mt-1 mb-8 drop-shadow-[0_2px_15px_rgba(255,0,127,0.5)]">
+        BATTLE OF GENERATIONS
+      </div>
+
+      <!-- Mode Buttons Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full max-w-2xl">
+        <button onclick="GameApp.selectMode('VS_CPU')" class="bvn-btn py-4 px-6 rounded-lg group text-left">
+          <div class="bvn-btn-inner flex items-center justify-between">
+            <div>
+              <div class="font-title text-2xl text-cyan-400 group-hover:text-white transition">VS CPU</div>
+              <div class="text-xs text-slate-400">1v1 Arcade Battle against Adaptive AI</div>
+            </div>
+            <span class="text-2xl opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition">⚔️</span>
+          </div>
+        </button>
+
+        <button onclick="GameApp.selectMode('VS_P2')" class="bvn-btn py-4 px-6 rounded-lg group text-left">
+          <div class="bvn-btn-inner flex items-center justify-between">
+            <div>
+              <div class="font-title text-2xl text-pink-400 group-hover:text-white transition">VS PLAYER 2</div>
+              <div class="text-xs text-slate-400">Local 2-Player Showdown (Shared Keyboard)</div>
+            </div>
+            <span class="text-2xl opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition">🥊</span>
+          </div>
+        </button>
+
+        <button onclick="GameApp.selectMode('TRAINING')" class="bvn-btn py-4 px-6 rounded-lg group text-left">
+          <div class="bvn-btn-inner flex items-center justify-between">
+            <div>
+              <div class="font-title text-2xl text-emerald-400 group-hover:text-white transition">TRAINING ROOM</div>
+              <div class="text-xs text-slate-400">Practice Combos, DPS Tracker & Move List</div>
+            </div>
+            <span class="text-2xl opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition">🎯</span>
+          </div>
+        </button>
+
+        <button onclick="GameApp.openCustomModal()" class="bvn-btn py-4 px-6 rounded-lg group text-left">
+          <div class="bvn-btn-inner flex items-center justify-between">
+            <div>
+              <div class="font-title text-2xl text-amber-400 group-hover:text-white transition">CUSTOM MODE</div>
+              <div class="text-xs text-slate-400">URF Cooldowns, 500% HP, Max Rage & Turbo Speed</div>
+            </div>
+            <span class="text-2xl opacity-70 group-hover:opacity-100 group-hover:translate-x-1 transition">⚡</span>
+          </div>
+        </button>
+      </div>
+    </div>
+
+    <!-- Bottom Controls Reference Bar -->
+    <div class="relative z-10 w-full max-w-6xl bg-slate-900/80 border border-slate-800 rounded-xl p-3 text-xs text-slate-300 flex flex-wrap items-center justify-between gap-2">
+      <div>
+        <span class="font-bold text-cyan-400">P1 CONTROLS:</span>
+        <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">WASD</span> Move/Jump/Block •
+        <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">J</span> Combo •
+        <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">K</span> Heavy/Launch •
+        <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">L</span> Flash Dash •
+        <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">U</span> Skill 1 •
+        <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">I</span> Skill 2 (1 Bar) •
+        <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">O</span> Ultimate (3 Bars)
+      </div>
+      <div>
+        <span class="font-bold text-pink-400">P2 CONTROLS:</span>
+        <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">ARROWS</span> Move/Jump/Block •
+        <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">NUM 1-6</span> (or <span class="bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">1-6</span>) Attacks & Skills
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== CUSTOM MODE SETTINGS MODAL ==================== -->
+  <div id="modal-custom" class="hidden absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-[#0e111d] border-2 border-amber-500/60 rounded-2xl max-w-xl w-full p-6 shadow-[0_0_50px_rgba(245,158,11,0.25)]">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <div>
+          <h2 class="font-title text-2xl text-amber-400">CUSTOM MODE SETTINGS</h2>
+          <p class="text-xs text-slate-400">Customize match rules, URF cooldowns, health multipliers, and speed</p>
+        </div>
+        <button onclick="GameApp.closeCustomModal()" class="text-slate-400 hover:text-white text-xl font-bold px-2">✕</button>
+      </div>
+
+      <div class="space-y-4 text-sm">
+        <!-- Opponent Type in Custom Mode -->
+        <div class="flex items-center justify-between">
+          <label class="font-semibold text-slate-200">Opponent Mode:</label>
+          <select id="cust-opponent" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-amber-300 font-semibold">
+            <option value="CPU">VS CPU (AI)</option>
+            <option value="P2">VS PLAYER 2 (Local 2P)</option>
+          </select>
+        </div>
+
+        <!-- HP Multiplier -->
+        <div>
+          <div class="flex justify-between mb-1">
+            <label class="font-semibold text-slate-200">HP Multiplier (Base 2,000 HP):</label>
+            <span id="cust-hp-val" class="text-cyan-400 font-bold">100% (2,000 HP)</span>
+          </div>
+          <input id="cust-hp" type="range" min="50" max="500" step="50" value="100" oninput="GameApp.updateCustomLabels()" class="w-full accent-amber-400 cursor-pointer" />
+        </div>
+
+        <!-- Rage Regen Rate -->
+        <div class="flex items-center justify-between">
+          <label class="font-semibold text-slate-200">Rage Regen Rate (Tốc Độ Hồi Nộ):</label>
+          <select id="cust-rage" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-amber-300 font-semibold">
+            <option value="0.5">Slow (0.5x)</option>
+            <option value="1" selected>Normal (1.0x)</option>
+            <option value="3">Fast (3.0x)</option>
+            <option value="999">Infinite (Always Max 3 Bars)</option>
+          </select>
+        </div>
+
+        <!-- Cooldown Reduction -->
+        <div class="flex items-center justify-between">
+          <label class="font-semibold text-slate-200">Cooldown Reduction (Giảm Hồi Chiêu):</label>
+          <select id="cust-cdr" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-amber-300 font-semibold">
+            <option value="0" selected>0% (Standard)</option>
+            <option value="0.5">50% Fast</option>
+            <option value="0.8">80% Hyper</option>
+            <option value="0.98">No Cooldown (URF Mode!)</option>
+          </select>
+        </div>
+
+        <!-- Match Timer -->
+        <div class="flex items-center justify-between">
+          <label class="font-semibold text-slate-200">Match Timer:</label>
+          <select id="cust-timer" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-amber-300 font-semibold">
+            <option value="60">60 Seconds</option>
+            <option value="99" selected>99 Seconds</option>
+            <option value="180">180 Seconds</option>
+            <option value="-1">Infinite Time (∞)</option>
+          </select>
+        </div>
+
+        <!-- Gravity / Game Speed -->
+        <div class="flex items-center justify-between">
+          <label class="font-semibold text-slate-200">Game Speed / Physics:</label>
+          <select id="cust-speed" class="bg-slate-900 border border-slate-700 rounded-lg px-3 py-1.5 text-amber-300 font-semibold">
+            <option value="1" selected>Normal Speed (1.0x)</option>
+            <option value="1.3">Turbo Speed (1.3x)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button onclick="GameApp.closeCustomModal()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-sm">CANCEL</button>
+        <button onclick="GameApp.confirmCustomMode()" class="px-6 py-2 rounded-lg bg-gradient-to-r from-amber-500 to-pink-600 hover:from-amber-400 hover:to-pink-500 text-black font-black text-sm tracking-wider uppercase shadow-lg">PROCEED TO FIGHTER SELECT →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 2. CHARACTER SELECT SCREEN ==================== -->
+  <div id="screen-select" class="hidden absolute inset-0 z-40 flex flex-col bg-[#070810] overflow-hidden">
+    <!-- Top Bar -->
+    <div class="flex flex-wrap items-center justify-between px-4 py-2.5 bg-[#0c0e1a] border-b border-slate-800 gap-2">
+      <div class="flex items-center gap-3">
+        <button onclick="GameApp.backToTitle()" class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 border border-slate-600 text-xs font-bold text-slate-200 flex items-center gap-1">
+          ← BACK
+        </button>
+        <div>
+          <span id="select-mode-badge" class="font-title text-lg text-cyan-400 tracking-wider">VS CPU</span>
+          <span class="text-xs text-slate-400 ml-2 hidden sm:inline">CHOOSE YOUR FIGHTERS</span>
+        </div>
+      </div>
+
+      <!-- Stage & AI Difficulty Selectors -->
+      <div class="flex flex-wrap items-center gap-2 text-xs">
+        <div class="flex items-center gap-1.5 bg-slate-900 px-2.5 py-1 rounded border border-slate-700">
+          <span class="text-slate-400 font-semibold">STAGE:</span>
+          <select id="select-stage" class="bg-transparent text-amber-300 font-bold focus:outline-none cursor-pointer">
+            <option value="0">Seoul Rainy Alleyway</option>
+            <option value="1">Workers 1st Affiliate Arena</option>
+            <option value="2">Cheonliang Mountain Shrine</option>
+            <option value="3">Busan Harbor Docks</option>
+            <option value="4">Yamazaki Estate (Blood Moon)</option>
+          </select>
+        </div>
+
+        <div id="ai-diff-container" class="flex items-center gap-1.5 bg-slate-900 px-2.5 py-1 rounded border border-slate-700">
+          <span class="text-slate-400 font-semibold">AI LEVEL:</span>
+          <select id="select-ai-diff" class="bg-transparent text-pink-400 font-bold focus:outline-none cursor-pointer">
+            <option value="0">Easy (Crew Fodder)</option>
+            <option value="1" selected>Normal (Crew Head)</option>
+            <option value="2">Hard (1st Gen King)</option>
+            <option value="3">God Dog / Legend (Peak)</option>
+          </select>
+        </div>
+
+        <!-- Selecting slot switch (P1 or P2/CPU) -->
+        <div class="flex items-center rounded overflow-hidden border border-slate-700">
+          <button id="slot-btn-p1" onclick="GameApp.setSelectingSlot(1)" class="px-3 py-1 font-bold bg-cyan-600 text-black">PICKING: P1</button>
+          <button id="slot-btn-p2" onclick="GameApp.setSelectingSlot(2)" class="px-3 py-1 font-bold bg-slate-900 text-slate-400 hover:text-white">PICKING: P2/CPU</button>
+        </div>
+
+        <button onclick="GameApp.randomSelect()" class="px-2.5 py-1 rounded bg-purple-700/60 hover:bg-purple-600 border border-purple-400/50 text-purple-100 font-bold">
+          🎲 RANDOM
+        </button>
+
+        <button onclick="GameApp.startMatch()" class="px-5 py-1.5 rounded bg-gradient-to-r from-cyan-500 via-blue-500 to-pink-600 hover:brightness-110 text-white font-title text-base tracking-wider shadow-[0_0_20px_rgba(0,240,255,0.4)] animate-pulse">
+          START BATTLE!
+        </button>
+      </div>
+    </div>
+
+    <!-- Main Content: Left P1 Preview + Center Roster Grid + Right P2 Preview -->
+    <div class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-3 p-3 overflow-hidden">
+      
+      <!-- P1 Preview Panel (Vietnamese Bio & Skills) -->
+      <div class="lg:col-span-3 bg-[#0c0f1d] border border-cyan-500/30 rounded-xl p-3 flex flex-col justify-between overflow-y-auto">
+        <div>
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div>
+              <span class="text-[10px] font-black px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 border border-cyan-500/40">PLAYER 1</span>
+              <h3 id="p1-preview-name" class="font-title text-xl text-white mt-1">Gapryong Kim</h3>
+              <div id="p1-preview-style" class="text-xs text-cyan-400 font-semibold">Innate Strength & Overcome</div>
+            </div>
+            <canvas id="p1-preview-canvas" width="90" height="110" class="bg-slate-950/80 rounded-lg border border-slate-800 shrink-0"></canvas>
+          </div>
+
+          <!-- Vietnamese Passive & Skills -->
+          <div class="mt-2.5 space-y-2 text-xs">
+            <div class="bg-slate-900/90 border border-purple-500/30 rounded-lg p-2">
+              <div class="text-[11px] font-bold text-purple-300 uppercase">Nội Tại (Passive):</div>
+              <div id="p1-preview-passive" class="text-slate-200 mt-0.5 leading-snug"></div>
+            </div>
+            <div class="bg-slate-900/90 border border-slate-800 rounded-lg p-2 space-y-1.5">
+              <div>
+                <span class="px-1.5 py-0.5 rounded bg-cyan-600/30 text-cyan-300 font-bold text-[10px]">SKILL U</span>
+                <span id="p1-preview-u-name" class="font-bold text-white ml-1"></span>
+                <p id="p1-preview-u-desc" class="text-slate-300 text-[11px] mt-0.5 leading-snug"></p>
+              </div>
+              <div class="border-t border-slate-800/80 pt-1">
+                <span class="px-1.5 py-0.5 rounded bg-amber-600/30 text-amber-300 font-bold text-[10px]">SKILL I (1 NỘ)</span>
+                <span id="p1-preview-i-name" class="font-bold text-white ml-1"></span>
+                <p id="p1-preview-i-desc" class="text-slate-300 text-[11px] mt-0.5 leading-snug"></p>
+              </div>
+              <div class="border-t border-slate-800/80 pt-1">
+                <span class="px-1.5 py-0.5 rounded bg-pink-600/30 text-pink-300 font-bold text-[10px]">ULTIMATE O (3 NỘ)</span>
+                <span id="p1-preview-o-name" class="font-bold text-pink-400 ml-1"></span>
+                <p id="p1-preview-o-desc" class="text-slate-300 text-[11px] mt-0.5 leading-snug"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Center 26-Character Roster Organized by Generation Tabs / Rows -->
+      <div class="lg:col-span-6 flex flex-col bg-[#0a0c16] border border-slate-800 rounded-xl p-3 overflow-hidden">
+        <!-- Generation Filter Tabs -->
+        <div class="flex items-center gap-2 mb-2.5 pb-2 border-b border-slate-800 overflow-x-auto">
+          <button onclick="GameApp.filterGeneration('ALL')" id="tab-gen-ALL" class="px-3 py-1 rounded-lg text-xs font-bold bg-cyan-500 text-black transition">ALL (26)</button>
+          <button onclick="GameApp.filterGeneration('GEN 0')" id="tab-gen-GEN 0" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-900 text-amber-400 border border-amber-500/30 hover:bg-slate-800 transition">GEN 0 • PRE-GENERATION (7)</button>
+          <button onclick="GameApp.filterGeneration('GEN 1')" id="tab-gen-GEN 1" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-900 text-pink-400 border border-pink-500/30 hover:bg-slate-800 transition">GEN 1 • KINGS & LEGENDS (8)</button>
+          <button onclick="GameApp.filterGeneration('GEN 2')" id="tab-gen-GEN 2" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-900 text-cyan-400 border border-cyan-500/30 hover:bg-slate-800 transition">GEN 2 • ALLIED & 4 CREWS (11)</button>
+        </div>
+
+        <!-- Scrollable Character Grid -->
+        <div id="roster-grid" class="flex-1 overflow-y-auto pr-1 space-y-3">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
+      <!-- P2 / CPU Preview Panel (Vietnamese Bio & Skills) -->
+      <div class="lg:col-span-3 bg-[#0c0f1d] border border-pink-500/30 rounded-xl p-3 flex flex-col justify-between overflow-y-auto">
+        <div>
+          <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+            <div>
+              <span id="p2-slot-tag" class="text-[10px] font-black px-2 py-0.5 rounded bg-pink-500/20 text-pink-300 border border-pink-500/40">CPU / PLAYER 2</span>
+              <h3 id="p2-preview-name" class="font-title text-xl text-white mt-1">Gun Park</h3>
+              <div id="p2-preview-style" class="text-xs text-pink-400 font-semibold">Kyokushin Karate, Aikido & TUI</div>
+            </div>
+            <canvas id="p2-preview-canvas" width="90" height="110" class="bg-slate-950/80 rounded-lg border border-slate-800 shrink-0"></canvas>
+          </div>
+
+          <!-- Vietnamese Passive & Skills -->
+          <div class="mt-2.5 space-y-2 text-xs">
+            <div class="bg-slate-900/90 border border-purple-500/30 rounded-lg p-2">
+              <div class="text-[11px] font-bold text-purple-300 uppercase">Nội Tại (Passive):</div>
+              <div id="p2-preview-passive" class="text-slate-200 mt-0.5 leading-snug"></div>
+            </div>
+            <div class="bg-slate-900/90 border border-slate-800 rounded-lg p-2 space-y-1.5">
+              <div>
+                <span class="px-1.5 py-0.5 rounded bg-cyan-600/30 text-cyan-300 font-bold text-[10px]">SKILL U</span>
+                <span id="p2-preview-u-name" class="font-bold text-white ml-1"></span>
+                <p id="p2-preview-u-desc" class="text-slate-300 text-[11px] mt-0.5 leading-snug"></p>
+              </div>
+              <div class="border-t border-slate-800/80 pt-1">
+                <span class="px-1.5 py-0.5 rounded bg-amber-600/30 text-amber-300 font-bold text-[10px]">SKILL I (1 NỘ)</span>
+                <span id="p2-preview-i-name" class="font-bold text-white ml-1"></span>
+                <p id="p2-preview-i-desc" class="text-slate-300 text-[11px] mt-0.5 leading-snug"></p>
+              </div>
+              <div class="border-t border-slate-800/80 pt-1">
+                <span class="px-1.5 py-0.5 rounded bg-pink-600/30 text-pink-300 font-bold text-[10px]">ULTIMATE O (3 NỘ)</span>
+                <span id="p2-preview-o-name" class="font-bold text-pink-400 ml-1"></span>
+                <p id="p2-preview-o-desc" class="text-slate-300 text-[11px] mt-0.5 leading-snug"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== 3. IN-GAME ARENA & HUD SCREEN ==================== -->
+  <div id="screen-game" class="hidden absolute inset-0 z-30 flex flex-col justify-between pointer-events-none">
+    
+    <!-- Main Game Canvas (Full Viewport) -->
+    <canvas id="game-canvas" class="absolute inset-0 w-full h-full pointer-events-auto"></canvas>
+
+    <!-- TOP HUD: Health Bars, Portraits, Timer, Generation Badges -->
+    <div class="relative z-20 w-full max-w-7xl mx-auto px-3 pt-2 pointer-events-auto">
+      <div class="grid grid-cols-11 items-start gap-2">
+        
+        <!-- PLAYER 1 HEALTH & INFO (Cols 1-5) -->
+        <div class="col-span-5 flex flex-col">
+          <div class="flex items-center justify-between mb-1">
+            <div class="flex items-center gap-2">
+              <span id="hud-p1-gen" class="px-1.5 py-0.5 text-[10px] font-black rounded bg-cyan-500 text-black uppercase">GEN 0</span>
+              <span id="hud-p1-name" class="font-title text-lg sm:text-xl text-white drop-shadow">GAPRYONG KIM</span>
+            </div>
+            <span id="hud-p1-hp-text" class="font-hud text-lg text-cyan-300">2000 / 2000</span>
+          </div>
+
+          <!-- P1 Health Bar Outer -->
+          <div class="relative w-full h-6 sm:h-7 bg-slate-950/90 border-2 border-cyan-500/60 rounded skew-x-[-12deg] overflow-hidden shadow-[0_0_15px_rgba(0,240,255,0.25)]">
+            <div id="hud-p1-hp-drain" class="hp-bar-drain absolute top-0 left-0 bottom-0 bg-amber-400" style="width: 100%;"></div>
+            <div id="hud-p1-hp-fill" class="hp-bar-fill absolute top-0 left-0 bottom-0 bg-gradient-to-r from-cyan-500 via-blue-500 to-emerald-400" style="width: 100%;"></div>
+          </div>
+
+          <!-- P1 Stamina & Passive Status Row -->
+          <div class="flex items-center justify-between mt-1 gap-2">
+            <div class="w-1/2 h-2 bg-slate-900 border border-slate-700 rounded overflow-hidden skew-x-[-12deg]">
+              <div id="hud-p1-stam-fill" class="h-full bg-amber-400 transition-all duration-75" style="width: 100%;"></div>
+            </div>
+            <div id="hud-p1-status" class="text-[11px] font-bold text-purple-300 tracking-wider uppercase truncate"></div>
+          </div>
+        </div>
+
+        <!-- CENTER TIMER & PAUSE / MOVE LIST BUTTON (Col 6) -->
+        <div class="col-span-1 flex flex-col items-center">
+          <div class="w-14 h-12 sm:w-16 sm:h-14 bg-slate-950/95 border-2 border-slate-600 rounded-xl flex items-center justify-center shadow-lg">
+            <span id="hud-timer" class="font-title text-2xl sm:text-3xl text-amber-400">99</span>
+          </div>
+          <div class="flex gap-1 mt-1">
+            <button onclick="GameApp.togglePause()" class="px-2 py-0.5 rounded bg-slate-900/90 hover:bg-slate-800 border border-slate-600 text-[10px] font-bold text-slate-200 shadow">
+              PAUSE / MOVES
+            </button>
+          </div>
+        </div>
+
+        <!-- PLAYER 2 HEALTH & INFO (Cols 7-11) -->
+        <div class="col-span-5 flex flex-col">
+          <div class="flex items-center justify-between mb-1">
+            <span id="hud-p2-hp-text" class="font-hud text-lg text-pink-300">2000 / 2000</span>
+            <div class="flex items-center gap-2">
+              <span id="hud-p2-name" class="font-title text-lg sm:text-xl text-white drop-shadow text-right">GUN PARK</span>
+              <span id="hud-p2-gen" class="px-1.5 py-0.5 text-[10px] font-black rounded bg-pink-500 text-black uppercase">GEN 1</span>
+            </div>
+          </div>
+
+          <!-- P2 Health Bar Outer (Right-to-Left fill) -->
+          <div class="relative w-full h-6 sm:h-7 bg-slate-950/90 border-2 border-pink-500/60 rounded skew-x-[12deg] overflow-hidden shadow-[0_0_15px_rgba(255,0,127,0.25)]">
+            <div id="hud-p2-hp-drain" class="hp-bar-drain absolute top-0 right-0 bottom-0 bg-amber-400" style="width: 100%;"></div>
+            <div id="hud-p2-hp-fill" class="hp-bar-fill absolute top-0 right-0 bottom-0 bg-gradient-to-l from-pink-500 via-rose-500 to-amber-500" style="width: 100%;"></div>
+          </div>
+
+          <!-- P2 Stamina & Passive Status Row -->
+          <div class="flex items-center justify-between mt-1 gap-2">
+            <div id="hud-p2-status" class="text-[11px] font-bold text-pink-300 tracking-wider uppercase truncate"></div>
+            <div class="w-1/2 h-2 bg-slate-900 border border-slate-700 rounded overflow-hidden skew-x-[12deg]">
+              <div id="hud-p2-stam-fill" class="h-full bg-amber-400 transition-all duration-75 ml-auto" style="width: 100%;"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- TRAINING ROOM TOOLBAR & VIETNAMESE MOVE LIST PANEL (Only visible in Training Mode) -->
+      <div id="training-toolbar" class="hidden mt-2 bg-slate-950/90 border border-emerald-500/40 rounded-xl p-2 text-xs flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="font-bold text-emerald-400 uppercase">TRAINING ROOM:</span>
+          <label class="flex items-center gap-1 cursor-pointer bg-slate-900 px-2 py-0.5 rounded border border-slate-700">
+            <input type="checkbox" id="trn-inf-hp" checked onchange="GameApp.updateTrainingSettings()" class="accent-emerald-400"> Infinite HP
+          </label>
+          <label class="flex items-center gap-1 cursor-pointer bg-slate-900 px-2 py-0.5 rounded border border-slate-700">
+            <input type="checkbox" id="trn-inf-rage" checked onchange="GameApp.updateTrainingSettings()" class="accent-emerald-400"> Infinite Rage (3 Bars)
+          </label>
+          <label class="flex items-center gap-1 cursor-pointer bg-slate-900 px-2 py-0.5 rounded border border-slate-700">
+            <input type="checkbox" id="trn-zero-cd" checked onchange="GameApp.updateTrainingSettings()" class="accent-emerald-400"> Zero Cooldown
+          </label>
+          <div class="flex items-center gap-1 bg-slate-900 px-2 py-0.5 rounded border border-slate-700">
+            <span class="text-slate-400">AI Dummy:</span>
+            <select id="trn-dummy-mode" onchange="GameApp.updateTrainingSettings()" class="bg-transparent text-amber-300 font-bold focus:outline-none">
+              <option value="STAND">Stand</option>
+              <option value="CROUCH">Crouch</option>
+              <option value="GUARD">Guard All</option>
+              <option value="FIGHT">Fight Back (AI)</option>
+            </select>
+          </div>
+          <button onclick="GameApp.resetTrainingPositions()" class="px-2 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-cyan-300 font-semibold border border-slate-600">
+            ↺ Reset Pos
+          </button>
+        </div>
+
+        <!-- Real-Time Damage & DPS Display -->
+        <div class="flex items-center gap-3 font-mono text-xs">
+          <div>LAST HIT: <span id="trn-last-dmg" class="text-cyan-300 font-bold">0</span></div>
+          <div>COMBO DMG: <span id="trn-combo-dmg" class="text-amber-300 font-bold">0</span></div>
+          <div>DPS: <span id="trn-dps" class="text-pink-400 font-bold">0</span></div>
+        </div>
+      </div>
+
+      <!-- Training Room On-Screen Vietnamese Move List Overlay -->
+      <div id="training-movelist-overlay" class="hidden mt-1.5 bg-slate-950/80 border border-slate-800 rounded-lg px-3 py-1.5 text-[11px] text-slate-200 flex flex-wrap items-center justify-between gap-2">
+        <div id="trn-vn-moves" class="flex flex-wrap items-center gap-x-4 gap-y-1"></div>
+      </div>
+    </div>
+
+    <!-- COMBO CALLOUT BANNERS (Left & Right) -->
+    <div class="relative z-10 w-full max-w-7xl mx-auto px-6 flex justify-between items-center pointer-events-none my-auto">
+      <div id="p1-combo-box" class="opacity-0 transition-opacity duration-150">
+        <div id="p1-combo-count" class="font-title text-4xl sm:text-5xl text-cyan-400 drop-shadow-[0_0_15px_rgba(0,240,255,0.8)] italic">5 HITS!</div>
+        <div id="p1-combo-sub" class="font-hud text-xl text-amber-300 tracking-widest uppercase">AMAZING COMBO!</div>
+      </div>
+      <div id="p2-combo-box" class="opacity-0 transition-opacity duration-150 text-right">
+        <div id="p2-combo-count" class="font-title text-4xl sm:text-5xl text-pink-500 drop-shadow-[0_0_15px_rgba(255,0,127,0.8)] italic">5 HITS!</div>
+        <div id="p2-combo-sub" class="font-hud text-xl text-amber-300 tracking-widest uppercase">BRUTAL COMBO!</div>
+      </div>
+    </div>
+
+    <!-- DRAMATIC ULTIMATE ANIME CUT-IN BANNER (ENGLISH) -->
+    <div id="ultimate-cutin" class="hidden absolute inset-x-0 top-1/3 z-40 pointer-events-none overflow-hidden">
+      <div id="ultimate-cutin-bar" class="w-full py-5 bg-gradient-to-r from-black via-purple-950/95 to-black border-y-4 border-amber-400 shadow-[0_0_60px_rgba(168,85,247,0.9)] flex flex-col items-center justify-center">
+        <div id="cutin-char-name" class="font-hud text-2xl sm:text-3xl text-cyan-300 tracking-[0.25em] uppercase">GAPRYONG KIM • AWAKENING</div>
+        <div id="cutin-skill-name" class="font-title text-3xl sm:text-5xl md:text-6xl text-white drop-shadow-[0_4px_20px_rgba(255,190,11,0.9)] text-center px-4">CONVICTION: FIST THAT SAVES ALL!</div>
+      </div>
+    </div>
+
+    <!-- BOTTOM HUD: 3-Bar Rage Gauge (Thanh Nộ) + Skill Cooldown Icons (U, I, O) -->
+    <div class="relative z-20 w-full max-w-7xl mx-auto px-3 pb-2.5 pointer-events-auto">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+        
+        <!-- P1 Rage & Skill Icons -->
+        <div class="bg-slate-950/85 border border-slate-800 rounded-xl p-2 flex flex-col gap-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <span class="font-bold text-amber-400 tracking-wider">RAGE GAUGE (THANH NỘ): <span id="hud-p1-rage-bars" class="text-white text-sm font-black">0</span> / 3 BARS</span>
+            <div class="flex items-center gap-1.5">
+              <span id="hud-p1-u-badge" class="px-2 py-0.5 rounded bg-slate-800 border border-cyan-500/50 text-[10px] font-bold text-cyan-300">U: READY</span>
+              <span id="hud-p1-i-badge" class="px-2 py-0.5 rounded bg-slate-800 border border-amber-500/50 text-[10px] font-bold text-amber-300">I (1 Bar): READY</span>
+              <span id="hud-p1-o-badge" class="px-2 py-0.5 rounded bg-slate-800 border border-pink-500/50 text-[10px] font-bold text-pink-400">O (3 Bars): LOCKED</span>
+            </div>
+          </div>
+          <!-- 3-Bar Segmented Rage Meter -->
+          <div class="grid grid-cols-3 gap-1.5 h-3">
+            <div class="bg-slate-900 rounded overflow-hidden border border-slate-700">
+              <div id="hud-p1-rage-1" class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 transition-all duration-75" style="width: 0%;"></div>
+            </div>
+            <div class="bg-slate-900 rounded overflow-hidden border border-slate-700">
+              <div id="hud-p1-rage-2" class="h-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all duration-75" style="width: 0%;"></div>
+            </div>
+            <div class="bg-slate-900 rounded overflow-hidden border border-slate-700">
+              <div id="hud-p1-rage-3" class="h-full bg-gradient-to-r from-pink-600 via-purple-500 to-cyan-400 transition-all duration-75" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- P2 Rage & Skill Icons -->
+        <div class="bg-slate-950/85 border border-slate-800 rounded-xl p-2 flex flex-col gap-1.5">
+          <div class="flex items-center justify-between text-xs">
+            <div class="flex items-center gap-1.5">
+              <span id="hud-p2-u-badge" class="px-2 py-0.5 rounded bg-slate-800 border border-cyan-500/50 text-[10px] font-bold text-cyan-300">4: READY</span>
+              <span id="hud-p2-i-badge" class="px-2 py-0.5 rounded bg-slate-800 border border-amber-500/50 text-[10px] font-bold text-amber-300">5 (1 Bar): READY</span>
+              <span id="hud-p2-o-badge" class="px-2 py-0.5 rounded bg-slate-800 border border-pink-500/50 text-[10px] font-bold text-pink-400">6 (3 Bars): LOCKED</span>
+            </div>
+            <span class="font-bold text-amber-400 tracking-wider">RAGE: <span id="hud-p2-rage-bars" class="text-white text-sm font-black">0</span> / 3 BARS</span>
+          </div>
+          <!-- 3-Bar Segmented Rage Meter -->
+          <div class="grid grid-cols-3 gap-1.5 h-3">
+            <div class="bg-slate-900 rounded overflow-hidden border border-slate-700">
+              <div id="hud-p2-rage-1" class="h-full bg-gradient-to-r from-amber-500 to-yellow-300 transition-all duration-75" style="width: 0%;"></div>
+            </div>
+            <div class="bg-slate-900 rounded overflow-hidden border border-slate-700">
+              <div id="hud-p2-rage-2" class="h-full bg-gradient-to-r from-orange-500 to-amber-400 transition-all duration-75" style="width: 0%;"></div>
+            </div>
+            <div class="bg-slate-900 rounded overflow-hidden border border-slate-700">
+              <div id="hud-p2-rage-3" class="h-full bg-gradient-to-r from-pink-600 via-purple-500 to-cyan-400 transition-all duration-75" style="width: 0%;"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== PAUSE & VIETNAMESE MOVE LIST MODAL ==================== -->
+  <div id="modal-pause" class="hidden absolute inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-[#0d101d] border-2 border-cyan-500/50 rounded-2xl max-w-4xl w-full p-6 shadow-2xl max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+        <h2 class="font-title text-2xl sm:text-3xl text-cyan-400">GAME PAUSED • MOVE LIST (BẢNG KỸ NĂNG)</h2>
+        <button onclick="GameApp.togglePause()" class="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm">RESUME (ESC)</button>
+      </div>
+
+      <!-- Both Players Vietnamese Move Lists -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto pr-1 flex-1 text-xs">
+        <div id="pause-p1-movelist" class="bg-slate-900/90 border border-cyan-500/30 rounded-xl p-4 space-y-2"></div>
+        <div id="pause-p2-movelist" class="bg-slate-900/90 border border-pink-500/30 rounded-xl p-4 space-y-2"></div>
+      </div>
+
+      <div class="mt-5 pt-3 border-t border-slate-800 flex flex-wrap justify-end gap-3">
+        <button onclick="GameApp.togglePause()" class="px-5 py-2 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-black font-bold text-sm">RESUME MATCH</button>
+        <button onclick="GameApp.restartMatch()" class="px-5 py-2 rounded-lg bg-amber-500 hover:bg-amber-400 text-black font-bold text-sm">RESTART MATCH</button>
+        <button onclick="GameApp.returnToSelect()" class="px-5 py-2 rounded-lg bg-pink-600 hover:bg-pink-500 text-white font-bold text-sm">CHARACTER SELECT</button>
+        <button onclick="GameApp.backToTitle()" class="px-4 py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== VICTORY / K.O. RESULT OVERLAY ==================== -->
+  <div id="modal-gameover" class="hidden absolute inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-[#0d101d] border-2 border-amber-400 rounded-2xl max-w-lg w-full p-6 text-center shadow-[0_0_60px_rgba(251,191,36,0.3)]">
+      <div class="text-xs font-black tracking-[0.3em] text-amber-400 uppercase">BATTLE CONCLUSION</div>
+      <h2 id="ko-winner-title" class="font-title text-4xl sm:text-5xl text-white mt-1 drop-shadow">GAPRYONG KIM WINS!</h2>
+      <p id="ko-winner-sub" class="text-sm text-cyan-300 font-semibold mt-1">"CONVICTION OVERCOMES ALL!"</p>
+
+      <div class="my-5 bg-slate-900/90 border border-slate-800 rounded-xl p-3 grid grid-cols-2 gap-2 text-xs">
+        <div>
+          <div class="text-slate-400">MAX COMBO</div>
+          <div id="ko-stat-combo" class="font-title text-xl text-amber-400">12 HITS</div>
+        </div>
+        <div>
+          <div class="text-slate-400">REMAINING HP</div>
+          <div id="ko-stat-hp" class="font-title text-xl text-emerald-400">68%</div>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap justify-center gap-3">
+        <button onclick="GameApp.restartMatch()" class="px-6 py-2.5 rounded-lg bg-gradient-to-r from-cyan-500 to-blue-600 hover:brightness-110 text-white font-title text-base tracking-wider">REMATCH</button>
+        <button onclick="GameApp.returnToSelect()" class="px-5 py-2.5 rounded-lg bg-pink-600 hover:bg-pink-500 text-white font-bold text-sm">CHARACTER SELECT</button>
+        <button onclick="GameApp.backToTitle()" class="px-4 py-2.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-sm">MAIN MENU</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== COMPLETE GAME ENGINE & ROSTER SCRIPT ==================== -->
+  <script>
+    /**
+     * ============================================================================
+     * 1. SYNTHESIZED SOUND ENGINE (Web Audio API - Zero External Assets)
+     * ============================================================================
+     */
+    class SoundEngine {
+      constructor() {
+        this.ctx = null;
+        this.enabled = true;
+      }
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+        if (this.ctx && this.ctx.state === 'suspended') {
+          this.ctx.resume();
+        }
+      }
+      toggle() {
+        this.enabled = !this.enabled;
+        return this.enabled;
+      }
+      play(type) {
+        if (!this.enabled) return;
+        this.init();
+        if (!this.ctx) return;
+
+        const now = this.ctx.currentTime;
+        if (type === 'ui') {
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(520, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.06);
+          gain.gain.setValueAtTime(0.12, now);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now);
+          osc.stop(now + 0.06);
+        } else if (type === 'punch') {
+          this.noiseBurst(0.07, 800, 120, 0.25);
+          this.toneBurst('sine', 160, 45, 0.08, 0.3);
+        } else if (type === 'heavy') {
+          this.noiseBurst(0.14, 600, 80, 0.4);
+          this.toneBurst('sawtooth', 130, 32, 0.16, 0.45);
+        } else if (type === 'slash') {
+          this.noiseBurst(0.11, 2800, 900, 0.3);
+          this.toneBurst('triangle', 950, 220, 0.1, 0.2);
+        } else if (type === 'block') {
+          this.toneBurst('square', 420, 280, 0.07, 0.2);
+        } else if (type === 'guardbreak') {
+          this.noiseBurst(0.22, 1200, 100, 0.5);
+          this.toneBurst('sawtooth', 260, 40, 0.25, 0.45);
+        } else if (type === 'dash') {
+          this.noiseBurst(0.09, 1800, 400, 0.18);
+        } else if (type === 'ult_freeze') {
+          this.toneBurst('sine', 300, 1200, 0.35, 0.35);
+          this.toneBurst('triangle', 600, 150, 0.45, 0.3);
+        } else if (type === 'ult_boom') {
+          this.noiseBurst(0.45, 500, 50, 0.6);
+          this.toneBurst('sawtooth', 110, 25, 0.45, 0.55);
+        }
+      }
+      toneBurst(type, fStart, fEnd, duration, vol) {
+        const now = this.ctx.currentTime;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(fStart, now);
+        osc.frequency.exponentialRampToValueAtTime(Math.max(20, fEnd), now + duration);
+        gain.gain.setValueAtTime(vol, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + duration);
+      }
+      noiseBurst(duration, filterStart, filterEnd, vol) {
+        const now = this.ctx.currentTime;
+        const bufferSize = this.ctx.sampleRate * duration;
+        const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+        const data = buffer.getChannelData(0);
+        for (let i = 0; i < bufferSize; i++) {
+          data[i] = Math.random() * 2 - 1;
+        }
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = buffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(filterStart, now);
+        filter.frequency.exponentialRampToValueAtTime(Math.max(40, filterEnd), now + duration);
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(vol, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.ctx.destination);
+        noise.start(now);
+      }
+    }
+    const SFX = new SoundEngine();
+
+    /**
+     * ============================================================================
+     * 2. COMPLETE 26-CHARACTER ROSTER DATA (CHARACTER_DATA)
+     *    Strict Localization: English Skill Names/Callouts, Vietnamese Bios/Tooltips
+     * ============================================================================
+     */
+    const CHARACTER_DATA = [
+      // ==================== GENERATION 0 (7 FIGHTERS) ====================
+      {
+        id: 'gapryong',
+        name: 'Gapryong Kim',
+        gen: 'GEN 0',
+        styleName: 'Innate Strength & Overcome',
+        animStyle: 'brawler',
+        masteryType: 'conviction',
+        visuals: {
+          skin: '#f1c27d', hairColor: '#1a1a1a', hairStyle: 'fedora',
+          topColor: '#1e1b2e', pantsColor: '#111118', accentColor: '#9d4edd',
+          auraColor: '#9d4edd', secondaryAura: '#e0aaff', eyeStyle: 'normal',
+          weapon: 'none', scale: 1.06
+        },
+        stats: { hp: 2200, atk: 1.15, spd: 1.0, def: 1.08 },
+        passiveVN: 'Ý Chí Bảo Vệ (Overcome): Khi máu dưới 40%, sát thương đòn đánh tăng 35%, miễn nhiễm khống chế nhẹ và tự động hồi Nộ.',
+        skills: {
+          u: { name: 'Fist of Legend', descVN: 'Đấm xung kích tầm gần tạo sóng chấn động tím đẩy lùi đối thủ.', cd: 4.5, dmg: 170, type: 'shockwave', range: 170 },
+          i: { name: 'Overcome Counter', descVN: 'Phản đòn vượt giới hạn, phá giáp (Guard Break) và xuyên mọi đòn thế.', cd: 7.0, dmg: 260, type: 'guardbreak_lunge', range: 210 },
+          o: { name: 'CONVICTION: FIST THAT SAVES ALL', descVN: 'Cú đấm huyền thoại dồn toàn bộ niềm tin, tạo cột sáng tím khổng lồ chấn động toàn màn hình.', cd: 12.0, dmg: 540 }
+        }
+      },
+      {
+        id: 'elite',
+        name: 'Elite (Charles Choi)',
+        gen: 'GEN 0',
+        styleName: 'Invisible Attacks & Tactical Mind',
+        animStyle: 'invisible',
+        masteryType: 'speed',
+        visuals: {
+          skin: '#f5cba7', hairColor: '#22252a', hairStyle: 'slick',
+          topColor: '#1c2536', pantsColor: '#0f141d', accentColor: '#00f0ff',
+          auraColor: '#00f0ff', secondaryAura: '#ff007f', eyeStyle: 'glasses',
+          weapon: 'none', scale: 1.02
+        },
+        stats: { hp: 1950, atk: 1.08, spd: 1.25, def: 0.96 },
+        passiveVN: 'Đòn Đánh Vô Hình (Invisible Attacks): Tốc độ ra đòn chân nhanh hơn 30%, có 20% tỉ lệ xuyên phòng thủ đối phương.',
+        skills: {
+          u: { name: 'Blind Spot Kick', descVN: 'Dịch chuyển chớp nhoáng đá tạt vào điểm mù của mục tiêu.', cd: 4.0, dmg: 155, type: 'teleport_kick', range: 240 },
+          i: { name: 'Strategic Execution', descVN: 'Chuỗi 5 cú đá liên hoàn trên không tốc độ cao.', cd: 6.5, dmg: 245, type: 'flurry', range: 190 },
+          o: { name: 'ABSOLUTE INVISIBLE BARRAGE', descVN: 'Biến mất khỏi màn hình, tạo hàng chục vệt cắt chân tốc độ ánh sáng kết thúc bằng cú đá bổ từ trên cao.', cd: 12.0, dmg: 510 }
+        }
+      },
+      {
+        id: 'jinyoung',
+        name: 'Jinyoung Park',
+        gen: 'GEN 0',
+        styleName: 'Gen 0 Copy Talent & Medical Madness',
+        animStyle: 'copy',
+        masteryType: 'technique',
+        visuals: {
+          skin: '#f1c27d', hairColor: '#2d3142', hairStyle: 'wild_headband',
+          topColor: '#e2e8f0', pantsColor: '#1e293b', accentColor: '#ff007f',
+          auraColor: '#ff007f', secondaryAura: '#00f0ff', eyeStyle: 'normal',
+          weapon: 'none', scale: 1.0
+        },
+        stats: { hp: 2000, atk: 1.1, spd: 1.12, def: 1.0 },
+        passiveVN: 'Bản Sao Nguyên Thủy: Mỗi khi tung kỹ năng, sao chép ngẫu nhiên hiệu ứng cường hóa (Đỏ/Xanh/Tím) trong 5 giây.',
+        skills: {
+          u: { name: 'Gen 0 Copy: Pivot Blow', descVN: 'Đá xoay người phản công cực mạnh.', cd: 4.2, dmg: 165, type: 'dash_strike', range: 185 },
+          i: { name: 'Truth Serum Slam', descVN: 'Lao tới túm cổ đối thủ đập mạnh xuống đất kèm hiệu ứng choáng.', cd: 7.0, dmg: 255, type: 'command_grab', range: 175 },
+          o: { name: 'PRE-GENERATION ARCHIVE', descVN: 'Tái hiện liên hoàn các tuyệt kỹ của Thế Hệ 0, kết thúc bằng cú đấm sao chép từ Gapryong Kim.', cd: 12.0, dmg: 525 }
+        }
+      },
+      {
+        id: 'tom_lee',
+        name: 'Tom Lee',
+        gen: 'GEN 0',
+        styleName: 'Wilderness / Ultimate King Animal Instinct',
+        animStyle: 'brawler',
+        masteryType: 'strength',
+        visuals: {
+          skin: '#e0ac69', hairColor: '#111111', hairStyle: 'long_wild',
+          topColor: '#2b1919', pantsColor: '#161212', accentColor: '#ffbe0b',
+          auraColor: '#ffbe0b', secondaryAura: '#ff2a2a', eyeStyle: 'wild',
+          weapon: 'claws', scale: 1.16
+        },
+        stats: { hp: 2400, atk: 1.18, spd: 1.08, def: 1.12 },
+        passiveVN: 'Bản Năng Hoang Dã: Đòn đánh thường gây hiệu ứng Chảy Máu (Bleed) theo thời gian.',
+        skills: {
+          u: { name: 'Feral Claw Lunge', descVN: 'Lao vồ tới như mãnh thú, cào rách phòng thủ đối phương.', cd: 4.3, dmg: 170, type: 'dash_strike', range: 200 },
+          i: { name: 'Fighting Genius Flick', descVN: 'Búng ngón tay tạo luồng gió cực mạnh hất văng kẻ địch.', cd: 6.5, dmg: 250, type: 'shockwave', range: 280 },
+          o: { name: 'ULTIMATE KING: WILDERNESS RAMPAGE', descVN: 'Xé toạc áo, hóa trạng thái dã thú điên cuồng vồ, cắn, quật đối thủ liên hoàn xuống mặt đất.', cd: 12.0, dmg: 550 }
+        }
+      },
+      {
+        id: 'shingen',
+        name: 'Shingen Yamazaki',
+        gen: 'GEN 0',
+        styleName: 'Yamazaki Brutal Karate & True Ultra Instinct',
+        animStyle: 'kyokushin',
+        masteryType: 'tui',
+        visuals: {
+          skin: '#eac086', hairColor: '#0b0b0e', hairStyle: 'long_wild',
+          topColor: '#11161b', pantsColor: '#090c10', accentColor: '#10b981',
+          auraColor: '#10b981', secondaryAura: '#000000', eyeStyle: 'ui',
+          weapon: 'none', scale: 1.15
+        },
+        stats: { hp: 2450, atk: 1.22, spd: 1.06, def: 1.15 },
+        passiveVN: 'Hắc Cốt & Bản Năng Vô Cực (Black Bone & TUI): Giảm 25% sát thương nhận vào từ vũ khí/đòn chém; đòn đánh có khả năng bẻ gãy phòng thủ ngay lập tức.',
+        skills: {
+          u: { name: 'Yamazaki Bone Crusher', descVN: 'Cú đấm trực diện xé toạc không khí gây choáng.', cd: 4.5, dmg: 180, type: 'guardbreak_lunge', range: 175 },
+          i: { name: 'Tearing Grab', descVN: 'Lao tới tóm gọn và quật nát mục tiêu xuống sàn với lực hủy diệt.', cd: 7.2, dmg: 275, type: 'command_grab', range: 185 },
+          o: { name: 'TRUE ULTRA INSTINCT: ONI ANNIHILATION', descVN: 'Bùng nổ hắc khí Oni, lao đi với tốc độ kinh hoàng tung chuỗi đòn tàn bạo đập nát toàn bộ sân đấu.', cd: 12.0, dmg: 560 }
+        }
+      },
+      {
+        id: 'shintaro',
+        name: 'Shintaro Yamazaki',
+        gen: 'GEN 0',
+        styleName: 'Yamazaki Aikido & Muramasa Swordsmanship',
+        animStyle: 'katana',
+        masteryType: 'ui',
+        visuals: {
+          skin: '#f1c27d', hairColor: '#111115', hairStyle: 'slick',
+          topColor: '#1e293b', pantsColor: '#0f172a', accentColor: '#ef4444',
+          auraColor: '#ef4444', secondaryAura: '#111827', eyeStyle: 'ui_glasses',
+          weapon: 'muramasa', scale: 1.05
+        },
+        stats: { hp: 2100, atk: 1.16, spd: 1.14, def: 1.04 },
+        passiveVN: 'Luật Lệ Gia Tộc & Kiếm Muramasa: Đòn kiếm bỏ qua 30% giáp và giảm khả năng hồi phục của mục tiêu.',
+        skills: {
+          u: { name: 'Aikido Reversal', descVN: 'Gạt đòn và quật ngã đối thủ ngay lập tức.', cd: 4.2, dmg: 165, type: 'counter_strike', range: 170 },
+          i: { name: 'Muramasa Crescent Slash', descVN: 'Rút kiếm chém vòng cung sắc bén tầm trung.', cd: 6.5, dmg: 260, type: 'slash_wave', range: 240 },
+          o: { name: 'CODE OF YAMAZAKI: MURAMASA EXECUTION', descVN: 'Kích hoạt mắt Vô Cực, lướt kiếm chém đứt lìa không gian bằng thanh Muramasa trong nháy mắt.', cd: 12.0, dmg: 535 }
+        }
+      },
+      {
+        id: 'paecheon',
+        name: 'Paecheon Jo',
+        gen: 'GEN 0',
+        styleName: 'Ancient Korean Taekkyon & Iron Palm',
+        animStyle: 'taekkyon',
+        masteryType: 'strength',
+        visuals: {
+          skin: '#d9a16c', hairColor: '#4b5563', hairStyle: 'slick',
+          topColor: '#27201c', pantsColor: '#171311', accentColor: '#f59e0b',
+          auraColor: '#f59e0b', secondaryAura: '#dc2626', eyeStyle: 'scar',
+          weapon: 'none', scale: 1.06
+        },
+        stats: { hp: 2250, atk: 1.12, spd: 1.02, def: 1.14 },
+        passiveVN: 'Lão Tướng Thời Loạn: Đứng yên hoặc đỡ đòn giúp tích lũy nội lực, làm đòn đánh tiếp theo gây thêm 40% sát thương.',
+        skills: {
+          u: { name: 'Iron Palm Shockwave', descVN: 'Chưởng lực tầm gần đẩy văng kẻ địch vào tường.', cd: 4.4, dmg: 170, type: 'shockwave', range: 200 },
+          i: { name: 'Sweeping Taekkyon Whip', descVN: 'Quét trụ tầm thấp nối tiếp bằng cú đá móc hất tung.', cd: 6.8, dmg: 250, type: 'guardbreak_lunge', range: 195 },
+          o: { name: 'BAEKDU MOUNTAIN BREAKER', descVN: 'Tung liên hoàn cước và thiết chưởng cổ truyền làm sụp đổ mặt đất dưới chân đối thủ.', cd: 12.0, dmg: 530 }
+        }
+      },
+
+      // ==================== GENERATION 1 (8 FIGHTERS) ====================
+      {
+        id: 'james_lee',
+        name: 'James Lee (DG)',
+        gen: 'GEN 1',
+        styleName: 'The Peak - Acrobatics & Invisible Attacks',
+        animStyle: 'invisible',
+        masteryType: 'speed',
+        visuals: {
+          skin: '#fce3c6', hairColor: '#ff66b2', hairStyle: 'messy',
+          topColor: '#f8fafc', pantsColor: '#1e293b', accentColor: '#ff007f',
+          auraColor: '#ff007f', secondaryAura: '#00f0ff', eyeStyle: 'normal',
+          weapon: 'none', scale: 1.02
+        },
+        stats: { hp: 1950, atk: 1.14, spd: 1.32, def: 0.98 },
+        passiveVN: 'Đỉnh Cao Thế Hệ 1 (The Peak): Tốc độ di chuyển và lướt (Dash) nhanh nhất game; né đòn thành công hồi ngay 20 điểm Nộ.',
+        skills: {
+          u: { name: 'Handstand Spinning Kick', descVN: 'Chống một tay lên đầu đối thủ và xoay người đá liên hoàn.', cd: 3.8, dmg: 165, type: 'flurry', range: 195 },
+          i: { name: 'Speed Threshold Blitz', descVN: 'Lướt xuyên qua đối thủ để lại 3 dư ảnh đá tạt.', cd: 6.2, dmg: 255, type: 'teleport_kick', range: 270 },
+          o: { name: 'THE LEGEND OF GEN 1: ONE MAN CIRCLE', descVN: 'Tốc độ đạt ngưỡng tối đa, biến cả màn hình thành cơn bão cước pháp vô hình màu hồng phấn.', cd: 12.0, dmg: 540 }
+        }
+      },
+      {
+        id: 'kitae',
+        name: 'Kitae Kim',
+        gen: 'GEN 1',
+        styleName: 'Brutal Innate Strength & Rough Imitation',
+        animStyle: 'brawler',
+        masteryType: 'strength',
+        visuals: {
+          skin: '#e5b887', hairColor: '#141418', hairStyle: 'slick',
+          topColor: '#181216', pantsColor: '#0e0b0d', accentColor: '#dc2626',
+          auraColor: '#dc2626', secondaryAura: '#111111', eyeStyle: 'dark',
+          weapon: 'axe', scale: 1.12
+        },
+        stats: { hp: 2300, atk: 1.24, spd: 1.08, def: 1.1 },
+        passiveVN: 'Bạo Chúa Mexico: Sát thương cơ bản cực cao; đòn đánh vào mục tiêu đang đỡ vẫn gây 40% sát thương xuyên thấu.',
+        skills: {
+          u: { name: 'Brutal Chop', descVN: 'Chém tay (hoặc rìu) tàn bạo từ trên xuống phá vỡ thế thủ.', cd: 4.3, dmg: 180, type: 'guardbreak_lunge', range: 185 },
+          i: { name: 'Hollow Imitation', descVN: 'Bắt chước thô bạo thế võ đối phương bằng sức mạnh cơ bắp thuần túy.', cd: 6.8, dmg: 270, type: 'dash_strike', range: 210 },
+          o: { name: "KING OF SEOUL'S NIGHTMARE", descVN: 'Tóm đầu đối thủ dập liên hoàn vào tường và kết liễu bằng cú chặt tay tàn khốc nhuốm sắc đỏ đen.', cd: 12.0, dmg: 555 }
+        }
+      },
+      {
+        id: 'gun_park',
+        name: 'Gun Park',
+        gen: 'GEN 1',
+        styleName: 'Kyokushin Karate, Aikido & True Ultra Instinct',
+        animStyle: 'kyokushin',
+        masteryType: 'tui',
+        visuals: {
+          skin: '#f3cfb3', hairColor: '#111115', hairStyle: 'slick',
+          topColor: '#eab308', pantsColor: '#111827', accentColor: '#10b981',
+          auraColor: '#10b981', secondaryAura: '#000000', eyeStyle: 'ui_sunglasses',
+          weapon: 'none', scale: 1.05
+        },
+        stats: { hp: 2350, atk: 1.18, spd: 1.08, def: 1.18 },
+        passiveVN: 'Bạch Quỷ (Shiro Oni): Càng mất máu, phòng thủ và sát thương càng tăng; sở hữu siêu giáp (Super Armor) ngắn khi tung đòn nặng.',
+        skills: {
+          u: { name: 'Kyokushin Straight', descVN: 'Đấm thẳng chuẩn xác tạo xung lực xuyên thấu.', cd: 4.0, dmg: 175, type: 'shockwave', range: 190 },
+          i: { name: 'Aikido Sky Throw', descVN: 'Bắt đòn và hất văng đối thủ lên không trung rồi đấm bồi.', cd: 6.8, dmg: 265, type: 'command_grab', range: 180 },
+          o: { name: 'SHIRO ONI: TRUE ULTRA INSTINCT', descVN: 'Gỡ kính, hóa trạng thái TUI điên cuồng với hào quang xanh đen, nghiền nát đối thủ bằng chuỗi đòn không thể cản phá.', cd: 12.0, dmg: 550 }
+        }
+      },
+      {
+        id: 'goo_kim',
+        name: 'Goo Kim',
+        gen: 'GEN 1',
+        styleName: 'Korean Kendo & Moonlight Swordsmanship',
+        animStyle: 'katana',
+        masteryType: 'technique',
+        visuals: {
+          skin: '#f7d7b5', hairColor: '#facc15', hairStyle: 'messy',
+          topColor: '#ca8a04', pantsColor: '#18181b', accentColor: '#fef08a',
+          auraColor: '#facc15', secondaryAura: '#38bdf8', eyeStyle: 'glasses',
+          weapon: 'katana', scale: 1.03
+        },
+        stats: { hp: 2100, atk: 1.22, spd: 1.16, def: 1.0 },
+        passiveVN: 'Thiên Tài Vũ Khí: Tầm đánh thường xa hơn nhờ kiếm; mọi đòn kiếm chí mạng gây chảy máu cộng dồn.',
+        skills: {
+          u: { name: 'Iaido Quick Draw', descVN: 'Lướt tới chém nhanh một nhát kiếm sắc lẹm.', cd: 3.8, dmg: 170, type: 'dash_strike', range: 230 },
+          i: { name: 'Zero Sword: Twin Slash', descVN: 'Chém chéo chữ X tốc độ cao hất tung đối thủ.', cd: 6.4, dmg: 265, type: 'slash_wave', range: 250 },
+          o: { name: 'MOONLIGHT SWORDSMANSHIP: NEW MOON', descVN: 'Không gian tối sầm hiện ánh trăng khuyết, Goo Kim tung 12 thức kiếm ánh trăng chém tan nát mục tiêu.', cd: 12.0, dmg: 545 }
+        }
+      },
+      {
+        id: 'sinu_han',
+        name: 'Sinu Han',
+        gen: 'GEN 1',
+        styleName: 'The Boy of Promise - Street Invisible Attacks',
+        animStyle: 'invisible',
+        masteryType: 'speed',
+        visuals: {
+          skin: '#f1c27d', hairColor: '#1f2937', hairStyle: 'messy',
+          topColor: '#581c87', pantsColor: '#3b0764', accentColor: '#a855f7',
+          auraColor: '#a855f7', secondaryAura: '#38bdf8', eyeStyle: 'scar',
+          weapon: 'none', scale: 1.02
+        },
+        stats: { hp: 2000, atk: 1.1, spd: 1.22, def: 0.98 },
+        passiveVN: 'Vị Thần Chiến Tranh Phố Big Deal: Đòn đá cuối trong chuỗi đánh thường luôn là Đòn Vô Hình làm chậm đối thủ.',
+        skills: {
+          u: { name: '100-Style Street Kick', descVN: 'Đá vòng cầu tốc độ cao từ góc khuất.', cd: 3.9, dmg: 160, type: 'teleport_kick', range: 220 },
+          i: { name: 'God of Combat Flurry', descVN: 'Lao tới tung mưa cước pháp không cho đối thủ kịp rơi xuống đất.', cd: 6.5, dmg: 250, type: 'flurry', range: 195 },
+          o: { name: 'BOY OF PROMISE: ETERNAL ROMANCE', descVN: 'Bùng nổ hào quang tím, tung chuỗi đòn đá vô hình bảo vệ phố Big Deal với tốc độ cực hạn.', cd: 12.0, dmg: 520 }
+        }
+      },
+      {
+        id: 'jinrang',
+        name: 'Jinrang',
+        gen: 'GEN 1',
+        styleName: 'King of Busan - Conviction Fist & Brutal Elbows',
+        animStyle: 'brawler',
+        masteryType: 'conviction',
+        visuals: {
+          skin: '#e0ac69', hairColor: '#18181b', hairStyle: 'long_wild',
+          topColor: '#27272a', pantsColor: '#111113', accentColor: '#9d4edd',
+          auraColor: '#9d4edd', secondaryAura: '#ef4444', eyeStyle: 'wild',
+          weapon: 'none', scale: 1.09
+        },
+        stats: { hp: 2300, atk: 1.2, spd: 1.06, def: 1.12 },
+        passiveVN: 'Bá Vương Busan (Wolf\'s Conviction): Khi đối đầu ở cự ly gần, sát thương đòn chỏ và đấm tăng 25% và không thể bị đẩy lùi.',
+        skills: {
+          u: { name: 'Busan Crushing Elbow', descVN: 'Đánh chỏ xoay người cực mạnh làm choáng mục tiêu.', cd: 4.2, dmg: 175, type: 'dash_strike', range: 175 },
+          i: { name: "Disciple's Conviction", descVN: 'Nén lực vào nắm đấm tung cú đấm ánh tím phá tan phòng ngự.', cd: 6.8, dmg: 270, type: 'guardbreak_lunge', range: 200 },
+          o: { name: 'FANG OF BUSAN: OVERCOME DESTRUCTION', descVN: 'Khoác hào quang Sói Đầu Đàn kết hợp ý chí của Gapryong Kim, tung liên hoàn chỏ và cú đấm hủy diệt.', cd: 12.0, dmg: 545 }
+        }
+      },
+      {
+        id: 'changsu_oh',
+        name: 'Changsu Oh',
+        gen: 'GEN 1',
+        styleName: 'Gen 1 Regional Iron Brawler',
+        animStyle: 'brawler',
+        masteryType: 'strength',
+        visuals: {
+          skin: '#d9a16c', hairColor: '#262626', hairStyle: 'short',
+          topColor: '#451a03', pantsColor: '#1c1917', accentColor: '#ea580c',
+          auraColor: '#ea580c', secondaryAura: '#dc2626', eyeStyle: 'scar',
+          weapon: 'wraps', scale: 1.07
+        },
+        stats: { hp: 2200, atk: 1.12, spd: 1.02, def: 1.12 },
+        passiveVN: 'Nắm Đấm Thép Thế Hệ 1: Đòn đánh thường tích điểm Bền Bỉ, đủ 5 điểm giúp đòn kỹ năng tiếp theo gây Choáng (Stun).',
+        skills: {
+          u: { name: 'Crushing Headbutt', descVN: 'Lao tới húc đầu trực diện làm choáng đối phương.', cd: 4.1, dmg: 165, type: 'dash_strike', range: 170 },
+          i: { name: "Regional King's Smash", descVN: 'Đấm móc từ dưới lên tạo cột sóng chấn động.', cd: 6.6, dmg: 250, type: 'guardbreak_lunge', range: 190 },
+          o: { name: 'FIRST GENERATION IRON REIGN', descVN: 'Gồng cứng toàn thân miễn nhiễm sát thương rồi tung chuỗi đấm tàn khốc nghiền nát mục tiêu.', cd: 12.0, dmg: 515 }
+        }
+      },
+      {
+        id: 'yujae_seon',
+        name: 'Yujae Seon',
+        gen: 'GEN 1',
+        styleName: 'High-Precision Joint Kicks & Combos',
+        animStyle: 'taekkyon',
+        masteryType: 'speed',
+        visuals: {
+          skin: '#f3cfb3', hairColor: '#1e293b', hairStyle: 'slick',
+          topColor: '#334155', pantsColor: '#0f172a', accentColor: '#38bdf8',
+          auraColor: '#38bdf8', secondaryAura: '#e2e8f0', eyeStyle: 'normal',
+          weapon: 'none', scale: 1.02
+        },
+        stats: { hp: 2000, atk: 1.1, spd: 1.18, def: 1.0 },
+        passiveVN: 'Cước Pháp Phá Khớp: Đòn đá trúng chân làm giảm 25% tốc độ di chuyển của đối phương trong 3 giây.',
+        skills: {
+          u: { name: 'Crescent Heel Drop', descVN: 'Đá búa từ trên cao phá thế đỡ đòn.', cd: 4.0, dmg: 160, type: 'guardbreak_lunge', range: 185 },
+          i: { name: 'Spiral Kick Combo', descVN: 'Xoay người trên không đá xoáy 4 nhịp liên tiếp.', cd: 6.4, dmg: 245, type: 'flurry', range: 205 },
+          o: { name: 'SUPREME GEN 1 EXECUTION KICK', descVN: 'Phối hợp khóa khớp và tung cú đá xuyên tâm với tốc độ điện xẹt.', cd: 12.0, dmg: 515 }
+        }
+      },
+
+      // ==================== GENERATION 2 (11 FIGHTERS) ====================
+      {
+        id: 'daniel_og',
+        name: 'Daniel Park (Original Body)',
+        gen: 'GEN 2',
+        styleName: "Gun's Training + Copy Talent (Systema / Hand Blade)",
+        animStyle: 'copy',
+        masteryType: 'ui',
+        visuals: {
+          skin: '#f7d7b5', hairColor: '#18181b', hairStyle: 'messy',
+          topColor: '#f8fafc', pantsColor: '#1e293b', accentColor: '#38bdf8',
+          auraColor: '#38bdf8', secondaryAura: '#ffffff', eyeStyle: 'normal',
+          weapon: 'none', scale: 1.0
+        },
+        stats: { hp: 2050, atk: 1.12, spd: 1.16, def: 1.02 },
+        passiveVN: 'Thiên Tài Ngốc Nghếch (Fool\'s Genius): Đòn đánh lừa (Feint) giúp kỹ năng nối tiếp sau đòn đánh thường tăng 20% sát thương.',
+        skills: {
+          u: { name: 'Jichang Copy: Hand Blade', descVN: 'Chặt bàn tay sắc như lưỡi đao theo phong cách Vua Chungcheong.', cd: 3.9, dmg: 165, type: 'dash_strike', range: 190 },
+          i: { name: 'James Lee Copy: Pivot Spin', descVN: 'Xoay người trên một chân tung cú đá tạt bất ngờ.', cd: 6.4, dmg: 250, type: 'teleport_kick', range: 215 },
+          o: { name: 'ORIGINAL ULTRA INSTINCT AWAKENING', descVN: 'Đôi mắt hóa đen (UI), tung liên hoàn Systema, Cước pháp Vô Hình và Chặt Tay kết liễu đối thủ.', cd: 12.0, dmg: 535 }
+        }
+      },
+      {
+        id: 'daniel_pb',
+        name: 'Daniel Park (Perfect Body)',
+        gen: 'GEN 2',
+        styleName: 'Perfect Body + Unconscious Ultra Instinct Mastery',
+        animStyle: 'copy',
+        masteryType: 'ui',
+        visuals: {
+          skin: '#f7d7b5', hairColor: '#09090b', hairStyle: 'messy',
+          topColor: '#ffffff', pantsColor: '#0f172a', accentColor: '#e2e8f0',
+          auraColor: '#f8fafc', secondaryAura: '#6366f1', eyeStyle: 'ui',
+          weapon: 'none', scale: 1.05
+        },
+        stats: { hp: 2250, atk: 1.2, spd: 1.22, def: 1.12 },
+        passiveVN: 'Cơ Thể Hoàn Hảo (Perfect Machine): Mọi chỉ số ở mức cân bằng hoàn hảo; tự động phản đòn nhẹ nếu bấm Đỡ (Block) đúng khoảnh khắc đối thủ chạm vào (Perfect Guard).',
+        skills: {
+          u: { name: 'Pivot Blow Counter', descVN: 'Xoay gót phản cước hất văng đối phương.', cd: 4.0, dmg: 175, type: 'counter_strike', range: 195 },
+          i: { name: 'Capoeira Brazilian Kick', descVN: 'Đá vòng cầu biến ảo từ dưới lên phá giáp.', cd: 6.5, dmg: 265, type: 'guardbreak_lunge', range: 210 },
+          o: { name: 'DEATH INCARNATE: PERFECT ULTRA INSTINCT', descVN: 'Bản năng vô cực bùng nổ, sao chép hoàn hảo kỹ thuật của Kitae, Gun và James Lee trong một chuỗi combo tuyệt đối.', cd: 12.0, dmg: 560 }
+        }
+      },
+      {
+        id: 'yohan',
+        name: 'Yohan Seong',
+        gen: 'GEN 2',
+        styleName: 'Infinite Technique (Vô Hạn Kỹ Thuật) & CQC',
+        animStyle: 'copy',
+        masteryType: 'technique',
+        visuals: {
+          skin: '#f7d7b5', hairColor: '#5c3a21', hairStyle: 'messy',
+          topColor: '#7f1d1d', pantsColor: '#1f2937', accentColor: '#fbbf24',
+          auraColor: '#fbbf24', secondaryAura: '#ec4899', eyeStyle: 'normal',
+          weapon: 'none', scale: 1.01
+        },
+        stats: { hp: 1950, atk: 1.18, spd: 1.24, def: 0.95 },
+        passiveVN: 'Con Đường Riêng - Vô Hạn Kỹ Thuật: Mỗi đòn đánh thường đều sinh ra thêm 1 dư ảnh đòn đánh phụ không thể đỡ hoàn toàn.',
+        skills: {
+          u: { name: '30m CQC Blitz', descVN: 'Lao vào vùng Cự Ly Cận Chiến tung 6 đấm siêu tốc.', cd: 3.8, dmg: 165, type: 'flurry', range: 240 },
+          i: { name: 'UI Daniel Copy (10 Seconds)', descVN: 'Ép cơ bắp, tăng 30% tốc độ và sát thương trong 6 giây kèm cú đá xoay.', cd: 7.0, dmg: 255, type: 'buff_strike', range: 200 },
+          o: { name: 'PATH TO PINNACLE: INFINITE TECHNIQUE', descVN: 'Hàng ngàn quỹ đạo đấm đá chồng chéo lên nhau tạo thành cơn mưa đòn đánh tất trúng từ mọi góc độ.', cd: 12.0, dmg: 545 }
+        }
+      },
+      {
+        id: 'jake_kim',
+        name: 'Jake Kim',
+        gen: 'GEN 2',
+        styleName: "MMA (BJJ + Striking) & Gapryong's Bloodline",
+        animStyle: 'brawler',
+        masteryType: 'conviction',
+        visuals: {
+          skin: '#f1c27d', hairColor: '#18181b', hairStyle: 'short',
+          topColor: '#3b0764', pantsColor: '#1e1b4b', accentColor: '#a855f7',
+          auraColor: '#9d4edd', secondaryAura: '#f43f5e', eyeStyle: 'scar',
+          weapon: 'gloves', scale: 1.04
+        },
+        stats: { hp: 2150, atk: 1.12, spd: 1.06, def: 1.06 },
+        passiveVN: 'Huyết Thống Huyền Thoại: Khi máu dưới 35%, đòn đánh nặng tự động kích hoạt hào quang tím của Gapryong Kim, tăng 50% sát thương.',
+        skills: {
+          u: { name: 'MMA Jumping Knee', descVN: 'Nhảy lên thúc gối kết hợp đấm móc.', cd: 4.0, dmg: 165, type: 'dash_strike', range: 185 },
+          i: { name: 'Guillotine Choke / Armbar', descVN: 'Quật ngã đối thủ và bẻ khớp gây sát thương xuyên giáp.', cd: 6.8, dmg: 255, type: 'command_grab', range: 170 },
+          o: { name: 'ROMANCE OF BIG DEAL: AWAKENED CONVICTION PUNCH', descVN: 'Ký ức về cha thức tỉnh, Jake tung cú đấm ánh tím một phát đo ván xuyên thủng mọi phòng ngự.', cd: 12.0, dmg: 540 }
+        }
+      },
+      {
+        id: 'eli_jang',
+        name: 'Eli Jang',
+        gen: 'GEN 2',
+        styleName: 'Animal Instinct & Dual Baton Mastery',
+        animStyle: 'dual_weapon',
+        masteryType: 'technique',
+        visuals: {
+          skin: '#f7d7b5', hairColor: '#18181b', hairStyle: 'messy',
+          topColor: '#1e293b', pantsColor: '#0f172a', accentColor: '#10b981',
+          auraColor: '#10b981', secondaryAura: '#ef4444', eyeStyle: 'beast_green',
+          weapon: 'batons', scale: 1.01
+        },
+        stats: { hp: 2000, atk: 1.14, spd: 1.18, def: 1.0 },
+        passiveVN: 'Quái Thú Hostel: Chuyển đổi linh hoạt giữa đòn gậy (làm lệch hướng đòn đánh) và móng vuốt (gây chảy máu sâu).',
+        skills: {
+          u: { name: 'Baton Deflect & Smash', descVN: 'Dùng gậy đôi gạt đòn rồi vụt mạnh vào đầu đối phương.', cd: 4.0, dmg: 160, type: 'counter_strike', range: 185 },
+          i: { name: 'Wild Throat Slash', descVN: 'Bỏ gậy lao tới cào rách cổ họng đối thủ bằng bản năng dã thú.', cd: 6.5, dmg: 255, type: 'dash_strike', range: 205 },
+          o: { name: 'LEGEND OF GANGBUK: FERAL HUNT', descVN: 'Đôi mắt xanh rực sáng trong bóng tối, kết hợp gậy đôi và vuốt thú xé xác mục tiêu liên hoàn.', cd: 12.0, dmg: 525 }
+        }
+      },
+      {
+        id: 'samuel_seo',
+        name: 'Samuel Seo',
+        gen: 'GEN 2',
+        styleName: 'Brutal Street Dogfight & Self-Hatred Endurance',
+        animStyle: 'brawler',
+        masteryType: 'endurance',
+        visuals: {
+          skin: '#eac086', hairColor: '#1e1b4b', hairStyle: 'slick',
+          topColor: '#31102f', pantsColor: '#18181b', accentColor: '#ec4899',
+          auraColor: '#ec4899', secondaryAura: '#ef4444', eyeStyle: 'glasses',
+          weapon: 'knuckles', scale: 1.08
+        },
+        stats: { hp: 2300, atk: 1.14, spd: 1.04, def: 1.14 },
+        passiveVN: 'Sự Tự Ti Điên Cuồng (Heat Mode): Càng nhận nhiều đòn, thanh Nhiệt (Heat) càng tăng, giúp tăng kích thước đòn đánh và hút máu nhẹ khi tấn công.',
+        skills: {
+          u: { name: 'Brass Knuckle Haymaker', descVN: 'Đeo tay gấu đấm tạt ngang cực mạnh.', cd: 4.2, dmg: 170, type: 'dash_strike', range: 180 },
+          i: { name: 'Ruthless Chokehold Smash', descVN: 'Túm mặt đối thủ kéo lê trên mặt đất rồi ném văng.', cd: 6.8, dmg: 260, type: 'command_grab', range: 180 },
+          o: { name: 'KING PROSPECT: INFERIORITY RAMPAGE', descVN: 'Cơn điên đạt đỉnh điểm, Samuel lao vào đấm nát đối thủ bằng tay gấu và đập bằng cánh cửa xe hơi.', cd: 12.0, dmg: 530 }
+        }
+      },
+      {
+        id: 'zack_lee',
+        name: 'Zack Lee',
+        gen: 'GEN 2',
+        styleName: 'Iron Boxing (In-Fighting + Iron Fortress)',
+        animStyle: 'boxing',
+        masteryType: 'endurance',
+        visuals: {
+          skin: '#f1c27d', hairColor: '#18181b', hairStyle: 'short',
+          topColor: '#064e3b', pantsColor: '#111827', accentColor: '#10b981',
+          auraColor: '#10b981', secondaryAura: '#00f0ff', eyeStyle: 'normal',
+          weapon: 'wraps', scale: 1.02
+        },
+        stats: { hp: 2250, atk: 1.1, spd: 1.2, def: 1.22 },
+        passiveVN: 'Pháo Đài Sắt (Iron Fortress): Khi giữ phím Đỡ (S), giảm tới 90% sát thương và phản lại một phần chấn động vào kẻ tấn công.',
+        skills: {
+          u: { name: 'Speed Boxer Flurry', descVN: 'Lướt bộ pháp boxing đấm 8 nhịp liên hoàn cực nhanh.', cd: 3.8, dmg: 165, type: 'flurry', range: 185 },
+          i: { name: "Gonseop Ji's Counter", descVN: 'Nghiêng người né đòn rồi tung cú đấm phản công một bước chí mạng.', cd: 6.5, dmg: 265, type: 'counter_strike', range: 210 },
+          o: { name: 'LIGHT OF IRON BOXING: SUPREME JI COUNTER', descVN: 'Hào quang tượng Phật hiện lên phía sau, Zack chịu đòn trực diện rồi tung cú đấm tốc độ ánh sáng hạ gục đối thủ.', cd: 12.0, dmg: 535 }
+        }
+      },
+      {
+        id: 'vasco',
+        name: 'Vasco (Euntae Lee)',
+        gen: 'GEN 2',
+        styleName: "Brekdak's Forbidden Muay Thai",
+        animStyle: 'muaythai',
+        masteryType: 'strength',
+        visuals: {
+          skin: '#e0ac69', hairColor: '#18181b', hairStyle: 'wild_headband',
+          topColor: '#7c2d12', pantsColor: '#1c1917', accentColor: '#f97316',
+          auraColor: '#ef4444', secondaryAura: '#fbbf24', eyeStyle: 'normal',
+          weapon: 'wraps', scale: 1.07
+        },
+        stats: { hp: 2200, atk: 1.2, spd: 1.06, def: 1.08 },
+        passiveVN: 'Trừng Phạt Kẻ Xấu: Đòn đá thấp và thúc gối của Vasco gây sát thương gấp đôi lên thanh Giáp/Phòng thủ của đối phương.',
+        skills: {
+          u: { name: 'Forbidden Skill #3: Low Kick', descVN: 'Cú phang ống đồng sấm sét làm đối thủ khuỵu gối.', cd: 4.0, dmg: 175, type: 'guardbreak_lunge', range: 175 },
+          i: { name: 'Compressed Muay Thai Knee', descVN: 'Lao tới thúc gối nén lực xuyên thủng bụng đối phương.', cd: 6.6, dmg: 265, type: 'dash_strike', range: 205 },
+          o: { name: "FORBIDDEN SKILL #1: RUNNER'S HIGH", descVN: 'Bùng nổ trạng thái Runner\'s High rực lửa, tốc độ và sức mạnh tăng vọt, tung mưa đòn chỏ, gối và cú đá kết liễu của người hùng.', cd: 12.0, dmg: 540 }
+        }
+      },
+      {
+        id: 'jay_hong',
+        name: 'Jay Hong',
+        gen: 'GEN 2',
+        styleName: 'Alexander Systema & Lethal Kali Arnis',
+        animStyle: 'dual_weapon',
+        masteryType: 'speed',
+        visuals: {
+          skin: '#f7d7b5', hairColor: '#fde047', hairStyle: 'covered_eyes',
+          topColor: '#1e293b', pantsColor: '#0f172a', accentColor: '#eab308',
+          auraColor: '#eab308', secondaryAura: '#38bdf8', eyeStyle: 'hidden',
+          weapon: 'kali', scale: 1.0
+        },
+        stats: { hp: 1950, atk: 1.12, spd: 1.2, def: 1.0 },
+        passiveVN: 'Võ Thuật Sát Thủ Thầm Lặng: Khi đối phương còn trên 50% máu, tốc độ vung gậy Kali của Jay tăng 25%.',
+        skills: {
+          u: { name: 'Systema Vital Strike', descVN: 'Đấm điểm huyệt làm tê liệt đối thủ trong thoáng chốc.', cd: 4.0, dmg: 160, type: 'dash_strike', range: 175 },
+          i: { name: 'Kali Stick Hurricane', descVN: 'Rút hai gậy Kali vụt liên hoàn tốc độ siêu thanh.', cd: 6.3, dmg: 250, type: 'flurry', range: 195 },
+          o: { name: 'HELMET PROTOCOL: LETHAL ARNIS', descVN: 'Đội mũ bảo hiểm lên đầu đối thủ để không gây án mạng, sau đó dùng gậy Kali và Systema đánh gục mục tiêu với tốc độ điên cuồng.', cd: 12.0, dmg: 525 }
+        }
+      },
+      {
+        id: 'vin_jin',
+        name: 'Vin Jin',
+        gen: 'GEN 2',
+        styleName: "Mujin Jin's Ssireum & Kudo",
+        animStyle: 'ssireum',
+        masteryType: 'strength',
+        visuals: {
+          skin: '#f1c27d', hairColor: '#18181b', hairStyle: 'short',
+          topColor: '#1d4ed8', pantsColor: '#1e3a8a', accentColor: '#dc2626',
+          auraColor: '#dc2626', secondaryAura: '#7f1d1d', eyeStyle: 'tinted_glasses',
+          weapon: 'none', scale: 1.04
+        },
+        stats: { hp: 2150, atk: 1.18, spd: 1.08, def: 1.08 },
+        passiveVN: 'Lực Nắm Xé Xương (Bone-Grabbing Grip): Mọi kỹ năng vật (Grab) của Vin Jin không thể bị đỡ bằng phím Phòng Thủ thông thường.',
+        skills: {
+          u: { name: 'Kudo Headbutt & Hook', descVN: 'Đấm Kudo kết hợp húc đầu tàn bạo.', cd: 4.1, dmg: 165, type: 'dash_strike', range: 170 },
+          i: { name: "Mujin's Bone Throw", descVN: 'Tóm thẳng vào xương vai đối thủ rồi quật cắm đầu xuống đất (Không thể đỡ).', cd: 6.6, dmg: 265, type: 'command_grab', range: 185 },
+          o: { name: 'MASTER OF CHEONLIANG: EYE REVEAL', descVN: 'Kính vỡ tung lộ đôi mắt nhiều con ngươi, Vin Jin tóm gọn đối thủ, bẻ khớp và quật liên hoàn làm nứt vỡ toàn bộ mặt sàn.', cd: 12.0, dmg: 535 }
+        }
+      },
+      {
+        id: 'olly_wang',
+        name: 'Olly Wang',
+        gen: 'GEN 2',
+        styleName: 'Painless Reckless Brawling & Eli Imitation',
+        animStyle: 'brawler',
+        masteryType: 'endurance',
+        visuals: {
+          skin: '#f1c27d', hairColor: '#18181b', hairStyle: 'dreads',
+          topColor: '#065f46', pantsColor: '#111827', accentColor: '#a855f7',
+          auraColor: '#9333ea', secondaryAura: '#10b981', eyeStyle: 'wild',
+          weapon: 'none', scale: 1.02
+        },
+        stats: { hp: 2350, atk: 1.1, spd: 1.08, def: 1.16 },
+        passiveVN: 'Vô Cảm Đau Đớn (Congenital Analgesia): Không bị khựng (Hitstun) bởi các đòn đánh thường nhẹ đầu tiên của đối phương.',
+        skills: {
+          u: { name: 'Painless Charge', descVN: 'Bất chấp sát thương lao thẳng tới tông và đấm ngã đối phương.', cd: 4.0, dmg: 165, type: 'dash_strike', range: 200 },
+          i: { name: 'Twisted Eli Copy', descVN: 'Bắt chước đòn khóa và quật của Eli Jang một cách điên loạn.', cd: 6.5, dmg: 250, type: 'command_grab', range: 180 },
+          o: { name: 'FEARLESS KING OF HOSTEL', descVN: 'Nở nụ cười vô cảm, chịu đựng mọi sát thương để áp sát và tung chuỗi đòn liều mạng hủy diệt cả hai.', cd: 12.0, dmg: 525 }
+        }
+      }
+    ];
+
+    /**
+     * ============================================================================
+     * 3. PROCEDURAL 2D SKELETAL STICKMAN RENDERER & MARTIAL ARTS KEYFRAMES
+     * ============================================================================
+     */
+    class StickmanRenderer {
+      static drawFighter(ctx, fighter, x, y, facing, scale = 1, isPreview = false) {
+        const data = fighter.data;
+        const vis = data.visuals;
+        const s = scale * (vis.scale || 1);
+        const time = performance.now() * 0.006;
+
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.scale(facing * s, s);
+
+        // 1. Draw Aura / Mastery Glow
+        if (!isPreview || Math.sin(time) > -2) {
+          const auraAlpha = fighter.ultTimer > 0 ? 0.65 : (fighter.rage >= 100 ? 0.35 : 0.18);
+          const radius = fighter.ultTimer > 0 ? 68 : 46;
+          const grad = ctx.createRadialGradient(0, -52, 6, 0, -52, radius);
+          grad.addColorStop(0, vis.auraColor + '99');
+          grad.addColorStop(0.6, (vis.secondaryAura || vis.auraColor) + '44');
+          grad.addColorStop(1, 'transparent');
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(0, -52, radius, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Rising Mastery / Conviction Lightning Sparks
+          if (data.masteryType === 'conviction' || fighter.rage >= 200 || fighter.ultTimer > 0) {
+            ctx.strokeStyle = vis.auraColor;
+            ctx.lineWidth = 2;
+            for (let i = 0; i < 3; i++) {
+              const lx = Math.sin(time * 3 + i * 2) * 24;
+              const ly = -20 - ((time * 40 + i * 30) % 75);
+              ctx.beginPath();
+              ctx.moveTo(lx, ly);
+              ctx.lineTo(lx + (Math.random() - 0.5) * 12, ly - 10);
+              ctx.lineTo(lx + (Math.random() - 0.5) * 12, ly - 20);
+              ctx.stroke();
+            }
+          }
+        }
+
+        // 2. Compute Skeletal Pose Angles based on State, AnimStyle & Frame
+        const pose = StickmanRenderer.getPose(fighter, time);
+
+        // Hip root position relative to feet at (0,0)
+        const hipX = pose.hipX;
+        const hipY = -44 + pose.hipY;
+        const neckX = hipX + Math.sin(pose.torsoAngle) * 32;
+        const neckY = hipY - Math.cos(pose.torsoAngle) * 32;
+        const headX = neckX + Math.sin(pose.headAngle) * 12;
+        const headY = neckY - Math.cos(pose.headAngle) * 12;
+
+        // Ground shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.45)';
+        ctx.beginPath();
+        ctx.ellipse(0, 2, 26, 6, 0, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Back Leg (Left)
+        const kneeLX = hipX + Math.sin(pose.uLegL) * 22;
+        const kneeLY = hipY + Math.cos(pose.uLegL) * 22;
+        const footLX = kneeLX + Math.sin(pose.lLegL) * 22;
+        const footLY = kneeLY + Math.cos(pose.lLegL) * 22;
+        StickmanRenderer.drawLimb(ctx, hipX, hipY, kneeLX, kneeLY, footLX, footLY, 9, vis.pantsColor, '#111');
+
+        // Back Arm (Left)
+        const elbowLX = neckX + Math.sin(pose.uArmL) * 18;
+        const elbowLY = neckY + Math.cos(pose.uArmL) * 18;
+        const handLX = elbowLX + Math.sin(pose.lArmL) * 17;
+        const handLY = elbowLY + Math.cos(pose.lArmL) * 17;
+        StickmanRenderer.drawLimb(ctx, neckX, neckY, elbowLX, elbowLY, handLX, handLY, 7.5, vis.topColor, vis.skin);
+
+        // Torso & Jacket/Coat/Haori
+        ctx.lineCap = 'round';
+        ctx.lineWidth = 14;
+        ctx.strokeStyle = vis.topColor;
+        ctx.beginPath();
+        ctx.moveTo(hipX, hipY);
+        ctx.lineTo(neckX, neckY);
+        ctx.stroke();
+
+        // Accent stripe / tie / open chest
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = vis.accentColor;
+        ctx.beginPath();
+        ctx.moveTo(hipX + 2, hipY - 2);
+        ctx.lineTo(neckX + 2, neckY + 2);
+        ctx.stroke();
+
+        // Front Leg (Right)
+        const kneeRX = hipX + Math.sin(pose.uLegR) * 22;
+        const kneeRY = hipY + Math.cos(pose.uLegR) * 22;
+        const footRX = kneeRX + Math.sin(pose.lLegR) * 22;
+        const footRY = kneeRY + Math.cos(pose.lLegR) * 22;
+        StickmanRenderer.drawLimb(ctx, hipX, hipY, kneeRX, kneeRY, footRX, footRY, 9.5, vis.pantsColor, '#e2e8f0');
+
+        // Speed Kick Arc Trail if kicking
+        if (pose.kickTrail) {
+          ctx.strokeStyle = vis.auraColor;
+          ctx.lineWidth = 5;
+          ctx.beginPath();
+          ctx.arc(hipX + 10, hipY - 10, 44, -0.9, 0.7);
+          ctx.stroke();
+        }
+
+        // Head
+        ctx.fillStyle = vis.skin;
+        ctx.beginPath();
+        ctx.arc(headX, headY, 11.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes & Accessories
+        StickmanRenderer.drawHeadDetails(ctx, headX, headY, vis, fighter.ultTimer > 0);
+
+        // Front Arm (Right) + Weapons
+        const elbowRX = neckX + Math.sin(pose.uArmR) * 18;
+        const elbowRY = neckY + Math.cos(pose.uArmR) * 18;
+        const handRX = elbowRX + Math.sin(pose.lArmR) * 17;
+        const handRY = elbowRY + Math.cos(pose.lArmR) * 17;
+        StickmanRenderer.drawLimb(ctx, neckX, neckY, elbowRX, elbowRY, handRX, handRY, 8, vis.topColor, vis.skin);
+
+        // Draw Weapon / Prop in Front Hand (and Left hand for dual weapons)
+        StickmanRenderer.drawWeapon(ctx, handRX, handRY, handLX, handLY, pose.weaponAngle, vis, fighter);
+
+        // Guard Shield Effect (Endurance Mastery / Iron Fortress)
+        if (fighter.state === 'GUARD') {
+          ctx.strokeStyle = data.id === 'zack_lee' ? '#10b981' : vis.auraColor;
+          ctx.lineWidth = 3.5;
+          ctx.fillStyle = data.id === 'zack_lee' ? 'rgba(16,185,129,0.22)' : 'rgba(0,240,255,0.15)';
+          ctx.beginPath();
+          ctx.arc(12, -48, 36, -Math.PI * 0.45, Math.PI * 0.45);
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      static drawLimb(ctx, x1, y1, x2, y2, x3, y3, width, upperColor, lowerTipColor) {
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+        ctx.lineWidth = width;
+        ctx.strokeStyle = upperColor;
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.lineTo(x3, y3);
+        ctx.stroke();
+
+        // Hand / Foot tip
+        ctx.fillStyle = lowerTipColor;
+        ctx.beginPath();
+        ctx.arc(x3, y3, width * 0.55, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      static drawHeadDetails(ctx, hx, hy, vis, isUltActive) {
+        // Eyes
+        const eyeX = hx + 5;
+        const eyeY = hy - 1;
+        if (vis.eyeStyle === 'ui' || vis.eyeStyle === 'ui_glasses' || (vis.eyeStyle === 'ui_sunglasses' && isUltActive)) {
+          // Reverse Eyes (Pitch black sclera + glowing white pupil)
+          ctx.fillStyle = '#000000';
+          ctx.beginPath();
+          ctx.ellipse(eyeX, eyeY, 4.2, 2.6, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.arc(eyeX + 1, eyeY, 1.4, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (vis.eyeStyle === 'beast_green') {
+          ctx.fillStyle = '#10b981';
+          ctx.beginPath();
+          ctx.arc(eyeX, eyeY, 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (vis.eyeStyle === 'tinted_glasses' && isUltActive) {
+          // Vin Jin 3-pupil polycoria reveal
+          ctx.fillStyle = '#dc2626';
+          ctx.beginPath();
+          ctx.arc(eyeX - 1, eyeY, 1.3, 0, Math.PI * 2);
+          ctx.arc(eyeX + 1.5, eyeY - 0.5, 1.3, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (vis.eyeStyle !== 'hidden') {
+          ctx.fillStyle = '#111';
+          ctx.beginPath();
+          ctx.arc(eyeX, eyeY, 1.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Scar
+        if (vis.eyeStyle === 'scar') {
+          ctx.strokeStyle = '#991b1b';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(eyeX - 1, eyeY - 5);
+          ctx.lineTo(eyeX + 1, eyeY + 5);
+          ctx.stroke();
+        }
+
+        // Glasses / Sunglasses
+        if ((vis.eyeStyle === 'glasses' || vis.eyeStyle === 'ui_glasses') || (vis.eyeStyle === 'ui_sunglasses' && !isUltActive) || (vis.eyeStyle === 'tinted_glasses' && !isUltActive)) {
+          ctx.fillStyle = vis.eyeStyle === 'ui_sunglasses' ? '#111' : (vis.eyeStyle === 'tinted_glasses' ? 'rgba(220,38,38,0.75)' : 'rgba(125,211,252,0.5)');
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 1.2;
+          ctx.fillRect(hx + 1, hy - 4, 8, 5);
+          ctx.strokeRect(hx + 1, hy - 4, 8, 5);
+        }
+
+        // Hair Styles & Hats
+        ctx.fillStyle = vis.hairColor;
+        if (vis.hairStyle === 'fedora') {
+          // Gapryong Fedora Hat
+          ctx.fillStyle = '#1e1b2e';
+          ctx.beginPath();
+          ctx.ellipse(hx, hy - 8, 16, 3.5, -0.08, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillRect(hx - 9, hy - 17, 18, 9);
+          ctx.fillStyle = '#9d4edd';
+          ctx.fillRect(hx - 9, hy - 10, 18, 2);
+        } else if (vis.hairStyle === 'long_wild') {
+          ctx.beginPath();
+          ctx.arc(hx - 2, hy - 3, 12, Math.PI * 0.7, Math.PI * 2.1);
+          ctx.lineTo(hx - 14, hy + 14);
+          ctx.lineTo(hx - 5, hy + 6);
+          ctx.fill();
+        } else if (vis.hairStyle === 'wild_headband') {
+          ctx.beginPath();
+          ctx.arc(hx, hy - 3, 12, Math.PI, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ef4444';
+          ctx.fillRect(hx - 11, hy - 7, 22, 3);
+        } else if (vis.hairStyle === 'covered_eyes') {
+          ctx.beginPath();
+          ctx.arc(hx + 1, hy - 2, 12.5, Math.PI * 0.85, Math.PI * 2.25);
+          ctx.fill();
+        } else if (vis.hairStyle === 'dreads') {
+          ctx.beginPath();
+          ctx.arc(hx, hy - 4, 12, Math.PI, Math.PI * 2);
+          ctx.fill();
+          ctx.lineWidth = 3;
+          ctx.strokeStyle = vis.hairColor;
+          for (let d = -8; d <= 2; d += 4) {
+            ctx.beginPath();
+            ctx.moveTo(hx + d, hy - 4);
+            ctx.lineTo(hx + d - 4, hy + 12);
+            ctx.stroke();
+          }
+        } else {
+          // Slick / Messy / Short
+          ctx.beginPath();
+          ctx.arc(hx - 1, hy - 3, 12, Math.PI * 0.85, Math.PI * 2.1);
+          ctx.fill();
+        }
+      }
+
+      static drawWeapon(ctx, rx, ry, lx, ly, angle, vis, fighter) {
+        const w = vis.weapon;
+        if (!w || w === 'none') return;
+
+        ctx.save();
+        if (w === 'katana' || w === 'muramasa') {
+          ctx.translate(rx, ry);
+          ctx.rotate(angle);
+          // Hilt
+          ctx.strokeStyle = '#111';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(-8, 0);
+          ctx.lineTo(4, 0);
+          ctx.stroke();
+          // Blade
+          ctx.strokeStyle = w === 'muramasa' ? '#f87171' : '#e2e8f0';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(4, 0);
+          ctx.lineTo(48, -2);
+          ctx.stroke();
+        } else if (w === 'batons' || w === 'kali') {
+          const color = w === 'kali' ? '#eab308' : '#1e293b';
+          // Right stick
+          ctx.save();
+          ctx.translate(rx, ry);
+          ctx.rotate(angle);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(-4, 0);
+          ctx.lineTo(26, 0);
+          ctx.stroke();
+          ctx.restore();
+          // Left stick
+          ctx.save();
+          ctx.translate(lx, ly);
+          ctx.rotate(angle * 0.7 + 0.4);
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(-4, 0);
+          ctx.lineTo(26, 0);
+          ctx.stroke();
+          ctx.restore();
+        } else if (w === 'axe' && (fighter.state === 'ATTACK' || fighter.state === 'SKILL')) {
+          ctx.translate(rx, ry);
+          ctx.rotate(angle);
+          ctx.strokeStyle = '#78350f';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(-4, 0);
+          ctx.lineTo(24, 0);
+          ctx.stroke();
+          ctx.fillStyle = '#dc2626';
+          ctx.beginPath();
+          ctx.moveTo(16, 0);
+          ctx.lineTo(26, -12);
+          ctx.lineTo(28, 8);
+          ctx.closePath();
+          ctx.fill();
+        } else if (w === 'knuckles' || w === 'gloves' || w === 'wraps') {
+          ctx.fillStyle = w === 'knuckles' ? '#fbbf24' : (w === 'gloves' ? '#9d4edd' : '#f8fafc');
+          ctx.beginPath();
+          ctx.arc(rx, ry, 5.5, 0, Math.PI * 2);
+          ctx.arc(lx, ly, 5.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      static getPose(fighter, time) {
+        const style = fighter.data.animStyle;
+        const state = fighter.state;
+        const p = {
+          hipX: 0, hipY: 0, torsoAngle: 0.08, headAngle: 0.05,
+          uArmL: -0.4, lArmL: 0.8, uArmR: 0.5, lArmR: 1.1,
+          uLegL: -0.35, lLegL: 0.1, uLegR: 0.35, lLegR: 0.15,
+          weaponAngle: -0.4, kickTrail: false
+        };
+
+        // IDLE POSES BY MARTIAL ARTS STYLE
+        if (state === 'IDLE' || state === 'WALK') {
+          const walkSwing = state === 'WALK' ? Math.sin(time * 3.2) * 0.55 : Math.sin(time * 1.2) * 0.06;
+          const bob = state === 'WALK' ? Math.abs(Math.sin(time * 3.2)) * 4 : Math.sin(time * 1.2) * 2;
+          p.hipY = bob;
+
+          if (style === 'invisible') {
+            // Hands tucked in pockets, upright relaxed torso
+            p.torsoAngle = -0.05;
+            p.uArmL = -0.15; p.lArmL = 0.25;
+            p.uArmR = 0.15;  p.lArmR = -0.2;
+          } else if (style === 'boxing') {
+            // High Peek-a-Boo guard
+            p.torsoAngle = 0.18;
+            p.uArmL = 0.7; p.lArmL = 1.9;
+            p.uArmR = 0.9; p.lArmR = 2.1;
+          } else if (style === 'muaythai') {
+            // High Muay Thai guard + rhythm leg lift
+            p.torsoAngle = 0.05;
+            p.uArmL = 0.85; p.lArmL = 1.85;
+            p.uArmR = 1.05; p.lArmR = 1.95;
+          } else if (style === 'kyokushin') {
+            // Rigid Karate stance
+            p.torsoAngle = 0.06;
+            p.uArmL = 0.35; p.lArmL = 1.3;
+            p.uArmR = 0.75; p.lArmR = 1.45;
+          } else if (style === 'katana') {
+            p.uArmR = 0.45; p.lArmR = 0.95;
+            p.weaponAngle = -0.6 + Math.sin(time) * 0.05;
+          }
+
+          if (state === 'WALK') {
+            p.uLegL = -walkSwing; p.lLegL = Math.max(0, -walkSwing * 0.5);
+            p.uLegR = walkSwing;  p.lLegR = Math.max(0, walkSwing * 0.5);
+          }
+        } else if (state === 'JUMP') {
+          p.hipY = -8;
+          p.uLegL = -0.5; p.lLegL = 0.6;
+          p.uLegR = 0.6;  p.lLegR = 0.9;
+          p.uArmL = -0.8; p.uArmR = 0.8;
+        } else if (state === 'GUARD') {
+          p.torsoAngle = -0.1;
+          p.hipY = 5;
+          p.uArmL = 0.8; p.lArmL = 2.1;
+          p.uArmR = 1.0; p.lArmR = 2.2;
+        } else if (state === 'HIT') {
+          p.torsoAngle = -0.45;
+          p.headAngle = -0.6;
+          p.uArmL = -0.9; p.uArmR = -0.5;
+        } else if (state === 'DASH') {
+          p.torsoAngle = 0.55;
+          p.uArmL = -0.9; p.uArmR = -0.7;
+          p.uLegL = -0.8; p.uLegR = 0.7;
+        } else if (state === 'ATTACK' || state === 'SKILL' || state === 'ULTIMATE') {
+          const step = fighter.comboStep || 1;
+          if (style === 'invisible' || (style === 'taekkyon' && step % 2 === 0) || (style === 'copy' && step === 2)) {
+            // Blinding High-Speed Spinning / Hook / Axe Kick
+            p.torsoAngle = -0.35;
+            p.uArmL = -0.2; p.lArmL = 0.2;
+            p.uArmR = 0.1;  p.lArmR = -0.1;
+            p.uLegR = 1.65; p.lLegR = 1.55;
+            p.kickTrail = true;
+          } else if (style === 'katana' || style === 'dual_weapon') {
+            // Weapon Slash Arc
+            p.torsoAngle = 0.32;
+            p.uArmR = 1.35 + (step % 2) * 0.4;
+            p.lArmR = 1.45;
+            p.weaponAngle = 0.65 + (step % 2) * 0.8;
+          } else if (style === 'muaythai' && step >= 3) {
+            // Flying Knee / Elbow Smash
+            p.torsoAngle = 0.25;
+            p.uLegR = 1.35; p.lLegR = 2.4;
+            p.uArmR = 1.5;  p.lArmR = 2.5;
+          } else {
+            // Corkscrew Punch / Haymaker / Hand-Blade Strike
+            p.torsoAngle = 0.35;
+            if (step % 2 === 1) {
+              p.uArmR = 1.55; p.lArmR = 1.55;
+              p.uArmL = -0.4; p.lArmL = 1.2;
+            } else {
+              p.uArmL = 1.55; p.lArmL = 1.55;
+              p.uArmR = 0.2;  p.lArmR = 1.4;
+            }
+          }
+        }
+        return p;
+      }
+    }
+
+    /**
+     * ============================================================================
+     * 4. FIGHTER ENTITY CLASS (Combat Physics, Passives, Combos, Skills, AI)
+     * ============================================================================
+     */
+    class Fighter {
+      constructor(charData, isP1, x, y, customRules) {
+        this.data = charData;
+        this.isP1 = isP1;
+        this.x = x;
+        this.y = y;
+        this.vx = 0;
+        this.vy = 0;
+        this.facing = isP1 ? 1 : -1;
+
+        const hpMult = customRules.hpMult || 1;
+        this.maxHp = Math.round(charData.stats.hp * hpMult);
+        this.hp = this.maxHp;
+        this.drainHp = this.maxHp;
+
+        this.maxRage = 300;
+        this.rage = customRules.rageRate >= 999 ? 300 : 0;
+        this.maxStamina = 100;
+        this.stamina = 100;
+
+        this.state = 'IDLE'; // IDLE, WALK, JUMP, GUARD, DASH, ATTACK, SKILL, ULTIMATE, HIT
+        this.jumpsLeft = 2;
+        this.comboStep = 0;
+        this.comboTimer = 0;
+        this.stateTimer = 0;
+        this.hitstunTimer = 0;
+        this.invulnTimer = 0;
+        this.ultTimer = 0;
+        this.guardStartTime = 0;
+
+        // Cooldowns
+        this.cdU = 0;
+        this.cdI = 0;
+        this.cdO = 0;
+
+        // Character Specific Passive Trackers
+        this.bleedTimer = 0;
+        this.slowTimer = 0;
+        this.buffTimer = 0;
+        this.paecheonCharge = 0;
+        this.changsuStacks = 0;
+        this.samuelHeat = 0;
+        this.lastNormalHitTime = 0;
+
+        // Combo & Stats Tracking
+        this.currentComboHits = 0;
+        this.maxComboHits = 0;
+        this.comboDamageAccum = 0;
+        this.lastHitDamage = 0;
+        this.afterimages = [];
+      }
+
+      getSpeed() {
+        let s = 6.2 * this.data.stats.spd;
+        if (this.data.id === 'james_lee') s *= 1.15;
+        if (this.slowTimer > 0) s *= 0.72;
+        if (this.buffTimer > 0) s *= 1.25;
+        return s;
+      }
+
+      getAttackMultiplier(enemy) {
+        let m = this.data.stats.atk;
+        // Gapryong Kim Passive (<40% HP: +35% dmg)
+        if (this.data.id === 'gapryong' && this.hp / this.maxHp < 0.4) m *= 1.35;
+        // Jake Kim Passive (<35% HP: +50% dmg)
+        if (this.data.id === 'jake_kim' && this.hp / this.maxHp < 0.35) m *= 1.5;
+        // Gun Park Passive (Shiro Oni: scales up to +35% with missing HP)
+        if (this.data.id === 'gun_park') m *= (1 + (1 - this.hp / this.maxHp) * 0.35);
+        // Jinrang Passive (Close range +25%)
+        if (this.data.id === 'jinrang' && Math.abs(this.x - enemy.x) < 130) m *= 1.25;
+        // Paecheon Jo Passive (+40% when charged)
+        if (this.data.id === 'paecheon' && this.paecheonCharge >= 1.2) m *= 1.4;
+        // Jinyoung / Yohan Buff
+        if (this.buffTimer > 0) m *= 1.25;
+        // Samuel Heat
+        if (this.data.id === 'samuel_seo') m *= (1 + Math.min(0.35, this.samuelHeat * 0.05));
+        return m;
+      }
+
+      getActivePassiveText(enemy) {
+        if (this.data.id === 'gapryong' && this.hp / this.maxHp < 0.4) return '⚡ OVERCOME ACTIVE (+35% ATK)';
+        if (this.data.id === 'jake_kim' && this.hp / this.maxHp < 0.35) return '⚡ BLOODLINE AWAKENED (+50% ATK)';
+        if (this.data.id === 'gun_park' && this.hp / this.maxHp < 0.6) return '👹 SHIRO ONI TUI SCALING';
+        if (this.data.id === 'paecheon' && this.paecheonCharge >= 1.2) return '🔥 IRON PALM CHARGED (+40%)';
+        if (this.data.id === 'changsu_oh' && this.changsuStacks >= 5) return '💥 IRON FIST STUN READY!';
+        if (this.data.id === 'samuel_seo' && this.samuelHeat > 0) return `🔥 HEAT MODE LV.${Math.min(7, this.samuelHeat)}`;
+        if (this.buffTimer > 0) return '✨ MASTERY COPY BUFF ACTIVE';
+        if (this.bleedTimer > 0) return '🩸 BLEEDING';
+        return '';
+      }
+
+      addRage(amount, customRules) {
+        if (customRules.rageRate >= 999) {
+          this.rage = 300;
+          return;
+        }
+        this.rage = Math.min(this.maxRage, this.rage + amount * (customRules.rageRate || 1));
+      }
+
+      update(dt, enemy, arena, customRules) {
+        const speedMult = customRules.gameSpeed || 1;
+        const effDt = dt * speedMult;
+
+        // Smooth Delayed HP Drain Bar
+        if (this.drainHp > this.hp) {
+          this.drainHp = Math.max(this.hp, this.drainHp - 380 * effDt);
+        } else {
+          this.drainHp = this.hp;
+        }
+
+        // Cooldowns
+        const cdr = customRules.cdr || 0;
+        const cdRate = 1 / Math.max(0.02, 1 - cdr);
+        if (this.cdU > 0) this.cdU = Math.max(0, this.cdU - effDt * cdRate);
+        if (this.cdI > 0) this.cdI = Math.max(0, this.cdI - effDt * cdRate);
+        if (this.cdO > 0) this.cdO = Math.max(0, this.cdO - effDt * cdRate);
+
+        // Stamina & Passive Regen
+        if (this.state !== 'GUARD' && this.state !== 'DASH') {
+          this.stamina = Math.min(this.maxStamina, this.stamina + 28 * effDt);
+        }
+        if (this.data.id === 'gapryong' && this.hp / this.maxHp < 0.4) {
+          this.addRage(14 * effDt, customRules);
+        }
+        if (this.data.id === 'paecheon' && (this.state === 'IDLE' || this.state === 'GUARD')) {
+          this.paecheonCharge = Math.min(2.0, this.paecheonCharge + effDt);
+        }
+
+        // Bleed DOT (Tom Lee / Goo Kim / Eli Jang)
+        if (this.bleedTimer > 0) {
+          this.bleedTimer -= effDt;
+          this.hp = Math.max(1, this.hp - 32 * effDt);
+        }
+        if (this.slowTimer > 0) this.slowTimer -= effDt;
+        if (this.buffTimer > 0) this.buffTimer -= effDt;
+        if (this.invulnTimer > 0) this.invulnTimer -= effDt;
+        if (this.ultTimer > 0) this.ultTimer -= effDt;
+        if (this.comboTimer > 0) {
+          this.comboTimer -= effDt;
+          if (this.comboTimer <= 0) this.comboStep = 0;
+        }
+
+        // Hitstun Recovery
+        if (this.hitstunTimer > 0) {
+          this.hitstunTimer -= effDt;
+          if (this.hitstunTimer <= 0) {
+            this.state = 'IDLE';
+            enemy.currentComboHits = 0;
+            enemy.comboDamageAccum = 0;
+          }
+        }
+
+        // State Timer (Attack / Dash / Skill)
+        if (this.stateTimer > 0) {
+          this.stateTimer -= effDt;
+          if (this.stateTimer <= 0 && this.hitstunTimer <= 0) {
+            this.state = this.y < arena.groundY ? 'JUMP' : 'IDLE';
+          }
+        }
+
+        // Physics & Gravity
+        this.x += this.vx * (effDt * 60);
+        this.y += this.vy * (effDt * 60);
+
+        if (this.y < arena.groundY) {
+          this.vy += 0.72 * (effDt * 60);
+        } else {
+          // Ground Bounce on heavy downward knockback
+          if (this.vy > 13 && this.hitstunTimer > 0) {
+            this.vy = -this.vy * 0.48;
+            this.y = arena.groundY - 2;
+            ArenaFX.spawnShockwave(this.x, arena.groundY, '#ffffff', 42);
+            SFX.play('heavy');
+          } else {
+            this.y = arena.groundY;
+            this.vy = 0;
+            this.jumpsLeft = 2;
+            if (this.state === 'JUMP') this.state = 'IDLE';
+          }
+        }
+
+        // Friction
+        this.vx *= Math.pow(0.82, effDt * 60);
+
+        // Wall Collision & Wall Bounce
+        const margin = 45;
+        if (this.x < margin) {
+          this.x = margin;
+          if (Math.abs(this.vx) > 9 && this.hitstunTimer > 0) {
+            this.vx = -this.vx * 0.65;
+            ArenaFX.spawnCallout(this.x + 30, this.y - 80, 'WALL BOUNCE!', '#ffbe0b');
+            ArenaFX.triggerShake(8, 0.15);
+          } else {
+            this.vx = 0;
+          }
+        } else if (this.x > arena.width - margin) {
+          this.x = arena.width - margin;
+          if (Math.abs(this.vx) > 9 && this.hitstunTimer > 0) {
+            this.vx = -this.vx * 0.65;
+            ArenaFX.spawnCallout(this.x - 30, this.y - 80, 'WALL BOUNCE!', '#ffbe0b');
+            ArenaFX.triggerShake(8, 0.15);
+          } else {
+            this.vx = 0;
+          }
+        }
+
+        // Update Afterimages
+        for (let i = this.afterimages.length - 1; i >= 0; i--) {
+          this.afterimages[i].alpha -= effDt * 2.8;
+          if (this.afterimages[i].alpha <= 0) this.afterimages.splice(i, 1);
+        }
+      }
+    }
+
+    /**
+     * ============================================================================
+     * 5. VISUAL EFFECTS MANAGER (Particles, Slashes, Lightning, Callouts, Cut-in)
+     * ============================================================================
+     */
+    const ArenaFX = {
+      particles: [],
+      callouts: [],
+      slashes: [],
+      shockwaves: [],
+      shakeTime: 0,
+      shakeMag: 0,
+      hitStopTimer: 0,
+      ultDarknessTimer: 0,
+
+      clear() {
+        this.particles = [];
+        this.callouts = [];
+        this.slashes = [];
+        this.shockwaves = [];
+        this.shakeTime = 0;
+        this.hitStopTimer = 0;
+        this.ultDarknessTimer = 0;
+      },
+
+      triggerShake(mag, duration) {
+        this.shakeMag = Math.max(this.shakeMag, mag);
+        this.shakeTime = Math.max(this.shakeTime, duration);
+      },
+
+      triggerHitStop(duration) {
+        this.hitStopTimer = Math.max(this.hitStopTimer, duration);
+      },
+
+      spawnHitSparks(x, y, color, count = 14) {
+        for (let i = 0; i < count; i++) {
+          const angle = Math.random() * Math.PI * 2;
+          const spd = 2 + Math.random() * 9;
+          this.particles.push({
+            x, y,
+            vx: Math.cos(angle) * spd,
+            vy: Math.sin(angle) * spd - 1.5,
+            size: 2.5 + Math.random() * 4,
+            color,
+            alpha: 1,
+            decay: 1.8 + Math.random() * 1.5
+          });
+        }
+      },
+
+      spawnSlashArc(x, y, facing, color, radius = 65) {
+        this.slashes.push({
+          x, y, facing, color, radius,
+          angle: (Math.random() - 0.5) * 0.8,
+          alpha: 1
+        });
+      },
+
+      spawnShockwave(x, y, color, maxRadius = 85) {
+        this.shockwaves.push({
+          x, y, color, radius: 10, maxRadius, alpha: 1
+        });
+      },
+
+      spawnCallout(x, y, text, color = '#ffffff', size = 22) {
+        this.callouts.push({
+          x, y, text, color, size, alpha: 1, vy: -1.8
+        });
+      },
+
+      update(dt) {
+        if (this.shakeTime > 0) this.shakeTime = Math.max(0, this.shakeTime - dt);
+        if (this.ultDarknessTimer > 0) this.ultDarknessTimer = Math.max(0, this.ultDarknessTimer - dt);
+
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.x += p.vx * (dt * 60);
+          p.y += p.vy * (dt * 60);
+          p.vy += 0.25 * (dt * 60);
+          p.alpha -= p.decay * dt;
+          if (p.alpha <= 0) this.particles.splice(i, 1);
+        }
+
+        for (let i = this.slashes.length - 1; i >= 0; i--) {
+          const s = this.slashes[i];
+          s.alpha -= dt * 4.2;
+          if (s.alpha <= 0) this.slashes.splice(i, 1);
+        }
+
+        for (let i = this.shockwaves.length - 1; i >= 0; i--) {
+          const sw = this.shockwaves[i];
+          sw.radius += (sw.maxRadius - sw.radius) * dt * 10;
+          sw.alpha -= dt * 3.0;
+          if (sw.alpha <= 0) this.shockwaves.splice(i, 1);
+        }
+
+        for (let i = this.callouts.length - 1; i >= 0; i--) {
+          const c = this.callouts[i];
+          c.y += c.vy * (dt * 60);
+          c.alpha -= dt * 1.15;
+          if (c.alpha <= 0) this.callouts.splice(i, 1);
+        }
+      },
+
+      render(ctx) {
+        // Shockwaves
+        for (const sw of this.shockwaves) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, sw.alpha);
+          ctx.strokeStyle = sw.color;
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.arc(sw.x, sw.y, sw.radius, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Slash Arcs
+        for (const s of this.slashes) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, s.alpha);
+          ctx.translate(s.x, s.y);
+          ctx.scale(s.facing, 1);
+          ctx.rotate(s.angle);
+          ctx.strokeStyle = s.color;
+          ctx.lineWidth = 6;
+          ctx.beginPath();
+          ctx.arc(0, 0, s.radius, -0.85, 0.85);
+          ctx.stroke();
+          ctx.restore();
+        }
+
+        // Particles
+        for (const p of this.particles) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, p.alpha);
+          ctx.fillStyle = p.color;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+
+        // Floating English Callouts & Skill Shoutouts
+        for (const c of this.callouts) {
+          ctx.save();
+          ctx.globalAlpha = Math.max(0, c.alpha);
+          ctx.font = `900 ${c.size}px 'Black Ops One', sans-serif`;
+          ctx.textAlign = 'center';
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 5;
+          ctx.strokeText(c.text, c.x, c.y);
+          ctx.fillStyle = c.color;
+          ctx.fillText(c.text, c.x, c.y);
+          ctx.restore();
+        }
+      }
+    };
+
+    /**
+     * ============================================================================
+     * 6. MAIN GAME APPLICATION CONTROLLER (Menus, Combat Engine, AI, Stages)
+     * ============================================================================
+     */
+    const GameApp = {
+      mode: 'VS_CPU', // VS_CPU, VS_P2, TRAINING, CUSTOM
+      selectingSlot: 1,
+      p1Index: 0,     // Gapryong Kim
+      p2Index: 9,     // Gun Park
+      genFilter: 'ALL',
+      stageIndex: 0,
+      aiDifficulty: 1,
+
+      customRules: {
+        opponent: 'CPU',
+        hpMult: 1.0,
+        rageRate: 1.0,
+        cdr: 0.0,
+        timer: 99,
+        gameSpeed: 1.0
+      },
+
+      trainingSettings: {
+        infHp: true,
+        infRage: true,
+        zeroCd: true,
+        dummyMode: 'STAND',
+        comboStartTime: 0
+      },
+
+      isRunning: false,
+      isPaused: false,
+      matchOver: false,
+      matchTimer: 99,
+      freezeTimer: 0,
+
+      p1: null,
+      p2: null,
+      keys: {},
+      arena: { width: 1280, height: 720, groundY: 580 },
+
+      init() {
+        // Sound button
+        document.getElementById('btn-sound-toggle').addEventListener('click', () => {
+          const on = SFX.toggle();
+          document.getElementById('sound-icon').textContent = on ? '🔊' : '🔇';
+          document.getElementById('sound-text').textContent = on ? 'SFX: ON' : 'SFX: OFF';
+          if (on) SFX.play('ui');
+        });
+
+        // Keyboard Listeners (BVN Controls for P1 & P2)
+        window.addEventListener('keydown', (e) => {
+          const code = e.code;
+          if (!this.keys[code]) {
+            this.keys[code] = true;
+            this.handleSingleKeyPress(code);
+          }
+          if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Space'].includes(code)) {
+            e.preventDefault();
+          }
+        });
+
+        window.addEventListener('keyup', (e) => {
+          this.keys[e.code] = false;
+        });
+
+        window.addEventListener('resize', () => this.resizeCanvas());
+        this.resizeCanvas();
+        this.renderRosterGrid();
+        this.updatePreviewPanels();
+        this.startTitlePreviewLoop();
+      },
+
+      resizeCanvas() {
+        const canvas = document.getElementById('game-canvas');
+        if (!canvas) return;
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        this.arena.width = canvas.width;
+        this.arena.height = canvas.height;
+        this.arena.groundY = Math.round(canvas.height * 0.80);
+      },
+
+      // ==================== NAVIGATION & CUSTOM MODE ====================
+      selectMode(modeName) {
+        SFX.play('ui');
+        this.mode = modeName;
+        if (modeName !== 'CUSTOM') {
+          this.customRules = {
+            opponent: modeName === 'VS_P2' ? 'P2' : 'CPU',
+            hpMult: 1.0,
+            rageRate: 1.0,
+            cdr: 0.0,
+            timer: modeName === 'TRAINING' ? -1 : 99,
+            gameSpeed: 1.0
+          };
+        }
+        document.getElementById('screen-title').classList.add('hidden');
+        document.getElementById('screen-select').classList.remove('hidden');
+        document.getElementById('select-mode-badge').textContent = modeName.replace('_', ' ');
+        document.getElementById('ai-diff-container').style.display =
+          (modeName === 'VS_P2' || (modeName === 'CUSTOM' && this.customRules.opponent === 'P2')) ? 'none' : 'flex';
+        this.updatePreviewPanels();
+      },
+
+      openCustomModal() {
+        SFX.play('ui');
+        document.getElementById('modal-custom').classList.remove('hidden');
+        this.updateCustomLabels();
+      },
+
+      closeCustomModal() {
+        SFX.play('ui');
+        document.getElementById('modal-custom').classList.add('hidden');
+      },
+
+      updateCustomLabels() {
+        const hpPct = parseInt(document.getElementById('cust-hp').value, 10);
+        const hpVal = Math.round(2000 * (hpPct / 100));
+        document.getElementById('cust-hp-val').textContent = `${hpPct}% (${hpVal.toLocaleString()} HP)`;
+      },
+
+      confirmCustomMode() {
+        this.customRules = {
+          opponent: document.getElementById('cust-opponent').value,
+          hpMult: parseInt(document.getElementById('cust-hp').value, 10) / 100,
+          rageRate: parseFloat(document.getElementById('cust-rage').value),
+          cdr: parseFloat(document.getElementById('cust-cdr').value),
+          timer: parseInt(document.getElementById('cust-timer').value, 10),
+          gameSpeed: parseFloat(document.getElementById('cust-speed').value)
+        };
+        this.closeCustomModal();
+        this.selectMode('CUSTOM');
+      },
+
+      backToTitle() {
+        SFX.play('ui');
+        this.isRunning = false;
+        this.isPaused = false;
+        document.getElementById('modal-pause').classList.add('hidden');
+        document.getElementById('modal-gameover').classList.add('hidden');
+        document.getElementById('screen-game').classList.add('hidden');
+        document.getElementById('screen-select').classList.add('hidden');
+        document.getElementById('screen-title').classList.remove('hidden');
+      },
+
+      returnToSelect() {
+        SFX.play('ui');
+        this.isRunning = false;
+        this.isPaused = false;
+        document.getElementById('modal-pause').classList.add('hidden');
+        document.getElementById('modal-gameover').classList.add('hidden');
+        document.getElementById('screen-game').classList.add('hidden');
+        document.getElementById('screen-select').classList.remove('hidden');
+      },
+
+      // ==================== CHARACTER SELECT SCREEN ====================
+      setSelectingSlot(slot) {
+        SFX.play('ui');
+        this.selectingSlot = slot;
+        const b1 = document.getElementById('slot-btn-p1');
+        const b2 = document.getElementById('slot-btn-p2');
+        if (slot === 1) {
+          b1.className = 'px-3 py-1 font-bold bg-cyan-500 text-black';
+          b2.className = 'px-3 py-1 font-bold bg-slate-900 text-slate-400 hover:text-white';
+        } else {
+          b2.className = 'px-3 py-1 font-bold bg-pink-500 text-black';
+          b1.className = 'px-3 py-1 font-bold bg-slate-900 text-slate-400 hover:text-white';
+        }
+      },
+
+      filterGeneration(gen) {
+        SFX.play('ui');
+        this.genFilter = gen;
+        ['ALL', 'GEN 0', 'GEN 1', 'GEN 2'].forEach(g => {
+          const btn = document.getElementById('tab-gen-' + g);
+          if (!btn) return;
+          if (g === gen) {
+            btn.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-cyan-500 text-black transition';
+          } else {
+            btn.className = 'px-3 py-1 rounded-lg text-xs font-bold bg-slate-900 text-slate-300 border border-slate-700 hover:bg-slate-800 transition';
+          }
+        });
+        this.renderRosterGrid();
+      },
+
+      renderRosterGrid() {
+        const container = document.getElementById('roster-grid');
+        container.innerHTML = '';
+
+        const gens = this.genFilter === 'ALL' ? ['GEN 0', 'GEN 1', 'GEN 2'] : [this.genFilter];
+        const genTitles = {
+          'GEN 0': 'GENERATION 0 • PRE-GENERATION LEGENDS',
+          'GEN 1': 'GENERATION 1 • AGE OF CIRCLES & KINGS',
+          'GEN 2': 'GENERATION 2 • ALLIED & THE 4 CREWS'
+        };
+
+        gens.forEach(g => {
+          const section = document.createElement('div');
+          const header = document.createElement('div');
+          header.className = 'text-[11px] font-black tracking-widest text-slate-400 uppercase mb-1.5 flex items-center gap-2';
+          header.innerHTML = `<span class="w-2 h-2 rounded-full ${g === 'GEN 0' ? 'bg-amber-400' : g === 'GEN 1' ? 'bg-pink-500' : 'bg-cyan-400'}"></span> ${genTitles[g]}`;
+          section.appendChild(header);
+
+          const grid = document.createElement('div');
+          grid.className = 'grid grid-cols-2 sm:grid-cols-4 gap-2';
+
+          CHARACTER_DATA.forEach((char, idx) => {
+            if (char.gen !== g) return;
+            const isP1 = idx === this.p1Index;
+            const isP2 = idx === this.p2Index;
+            let cardClass = 'char-card rounded-lg p-2 cursor-pointer relative flex flex-col justify-between';
+            if (isP1 && isP2) cardClass += ' selected-both';
+            else if (isP1) cardClass += ' selected-p1';
+            else if (isP2) cardClass += ' selected-p2';
+
+            const card = document.createElement('div');
+            card.className = cardClass;
+            card.onclick = () => this.pickCharacter(idx);
+
+            card.innerHTML = `
+              <div class="flex items-center justify-between mb-1">
+                <span class="w-3 h-3 rounded-full border border-white/40" style="background:${char.visuals.auraColor}"></span>
+                <div class="flex gap-1">
+                  ${isP1 ? '<span class="px-1.5 py-0.2 bg-cyan-400 text-black font-black text-[9px] rounded">P1</span>' : ''}
+                  ${isP2 ? '<span class="px-1.5 py-0.2 bg-pink-500 text-white font-black text-[9px] rounded">P2</span>' : ''}
+                </div>
+              </div>
+              <div class="font-title text-xs text-white truncate">${char.name}</div>
+              <div class="text-[10px] text-slate-400 truncate">${char.styleName}</div>
+            `;
+            grid.appendChild(card);
+          });
+
+          section.appendChild(grid);
+          container.appendChild(section);
+        });
+      },
+
+      pickCharacter(idx) {
+        SFX.play('ui');
+        if (this.selectingSlot === 1) {
+          this.p1Index = idx;
+          this.setSelectingSlot(2);
+        } else {
+          this.p2Index = idx;
+          this.setSelectingSlot(1);
+        }
+        this.renderRosterGrid();
+        this.updatePreviewPanels();
+      },
+
+      randomSelect() {
+        SFX.play('ui');
+        this.p1Index = Math.floor(Math.random() * CHARACTER_DATA.length);
+        this.p2Index = Math.floor(Math.random() * CHARACTER_DATA.length);
+        this.renderRosterGrid();
+        this.updatePreviewPanels();
+      },
+
+      updatePreviewPanels() {
+        const c1 = CHARACTER_DATA[this.p1Index];
+        const c2 = CHARACTER_DATA[this.p2Index];
+
+        document.getElementById('p1-preview-name').textContent = c1.name;
+        document.getElementById('p1-preview-style').textContent = c1.styleName;
+        document.getElementById('p1-preview-passive').textContent = c1.passiveVN;
+        document.getElementById('p1-preview-u-name').textContent = c1.skills.u.name;
+        document.getElementById('p1-preview-u-desc').textContent = c1.skills.u.descVN;
+        document.getElementById('p1-preview-i-name').textContent = c1.skills.i.name;
+        document.getElementById('p1-preview-i-desc').textContent = c1.skills.i.descVN;
+        document.getElementById('p1-preview-o-name').textContent = c1.skills.o.name;
+        document.getElementById('p1-preview-o-desc').textContent = c1.skills.o.descVN;
+
+        document.getElementById('p2-preview-name').textContent = c2.name;
+        document.getElementById('p2-preview-style').textContent = c2.styleName;
+        document.getElementById('p2-preview-passive').textContent = c2.passiveVN;
+        document.getElementById('p2-preview-u-name').textContent = c2.skills.u.name;
+        document.getElementById('p2-preview-u-desc').textContent = c2.skills.u.descVN;
+        document.getElementById('p2-preview-i-name').textContent = c2.skills.i.name;
+        document.getElementById('p2-preview-i-desc').textContent = c2.skills.i.descVN;
+        document.getElementById('p2-preview-o-name').textContent = c2.skills.o.name;
+        document.getElementById('p2-preview-o-desc').textContent = c2.skills.o.descVN;
+      },
+
+      startTitlePreviewLoop() {
+        const bgCanvas = document.getElementById('title-bg-canvas');
+        const p1Canvas = document.getElementById('p1-preview-canvas');
+        const p2Canvas = document.getElementById('p2-preview-canvas');
+
+        const loop = () => {
+          if (!document.getElementById('screen-title').classList.contains('hidden') && bgCanvas) {
+            bgCanvas.width = window.innerWidth;
+            bgCanvas.height = window.innerHeight;
+            const ctx = bgCanvas.getContext('2d');
+            ctx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+            // Draw iconic silhouettes clashing in the background
+            const dummy1 = { data: CHARACTER_DATA[0], state: 'ATTACK', comboStep: 1, rage: 300, ultTimer: 1 };
+            const dummy2 = { data: CHARACTER_DATA[7], state: 'ATTACK', comboStep: 2, rage: 300, ultTimer: 1 };
+            StickmanRenderer.drawFighter(ctx, dummy1, bgCanvas.width * 0.25, bgCanvas.height * 0.72, 1, 2.1, true);
+            StickmanRenderer.drawFighter(ctx, dummy2, bgCanvas.width * 0.75, bgCanvas.height * 0.72, -1, 2.1, true);
+          }
+
+          if (!document.getElementById('screen-select').classList.contains('hidden')) {
+            if (p1Canvas) {
+              const ctx1 = p1Canvas.getContext('2d');
+              ctx1.clearRect(0, 0, p1Canvas.width, p1Canvas.height);
+              StickmanRenderer.drawFighter(ctx1, { data: CHARACTER_DATA[this.p1Index], state: 'IDLE', rage: 200, ultTimer: 0 }, 45, 98, 1, 0.85, true);
+            }
+            if (p2Canvas) {
+              const ctx2 = p2Canvas.getContext('2d');
+              ctx2.clearRect(0, 0, p2Canvas.width, p2Canvas.height);
+              StickmanRenderer.drawFighter(ctx2, { data: CHARACTER_DATA[this.p2Index], state: 'IDLE', rage: 200, ultTimer: 0 }, 45, 98, -1, 0.85, true);
+            }
+          }
+          requestAnimationFrame(loop);
+        };
+        requestAnimationFrame(loop);
+      },
+
+      // ==================== START & MANAGE MATCH ====================
+      startMatch() {
+        SFX.play('ult_freeze');
+        this.stageIndex = parseInt(document.getElementById('select-stage').value, 10);
+        this.aiDifficulty = parseInt(document.getElementById('select-ai-diff').value, 10);
+
+        document.getElementById('screen-select').classList.add('hidden');
+        document.getElementById('modal-pause').classList.add('hidden');
+        document.getElementById('modal-gameover').classList.add('hidden');
+        document.getElementById('screen-game').classList.remove('hidden');
+
+        this.resizeCanvas();
+        ArenaFX.clear();
+
+        const c1 = CHARACTER_DATA[this.p1Index];
+        const c2 = CHARACTER_DATA[this.p2Index];
+
+        this.p1 = new Fighter(c1, true, this.arena.width * 0.28, this.arena.groundY, this.customRules);
+        this.p2 = new Fighter(c2, false, this.arena.width * 0.72, this.arena.groundY, this.customRules);
+
+        // HUD Setup
+        document.getElementById('hud-p1-name').textContent = c1.name.toUpperCase();
+        document.getElementById('hud-p1-gen').textContent = c1.gen;
+        document.getElementById('hud-p2-name').textContent = c2.name.toUpperCase();
+        document.getElementById('hud-p2-gen').textContent = c2.gen;
+
+        // Training Mode Setup
+        const trnBar = document.getElementById('training-toolbar');
+        const trnMoves = document.getElementById('training-movelist-overlay');
+        if (this.mode === 'TRAINING') {
+          trnBar.classList.remove('hidden');
+          trnMoves.classList.remove('hidden');
+          this.updateTrainingSettings();
+          document.getElementById('trn-vn-moves').innerHTML = `
+            <span><b class="text-cyan-400">${c1.name}:</b></span>
+            <span><b class="text-purple-300">Nội tại:</b> ${c1.passiveVN}</span>
+            <span><b class="text-cyan-300">[U] ${c1.skills.u.name}:</b> ${c1.skills.u.descVN}</span>
+            <span><b class="text-amber-300">[I] ${c1.skills.i.name}:</b> ${c1.skills.i.descVN}</span>
+            <span><b class="text-pink-400">[O] ${c1.skills.o.name}:</b> ${c1.skills.o.descVN}</span>
+          `;
+        } else {
+          trnBar.classList.add('hidden');
+          trnMoves.classList.add('hidden');
+        }
+
+        this.populatePauseMoveLists(c1, c2);
+
+        this.matchTimer = this.customRules.timer;
+        this.matchOver = false;
+        this.isPaused = false;
+        this.isRunning = true;
+        this.lastFrameTime = performance.now();
+
+        ArenaFX.spawnCallout(this.arena.width / 2, this.arena.height * 0.4, 'FIGHT!', '#00f0ff', 48);
+        requestAnimationFrame((t) => this.gameLoop(t));
+      },
+
+      restartMatch() {
+        this.startMatch();
+      },
+
+      updateTrainingSettings() {
+        this.trainingSettings.infHp = document.getElementById('trn-inf-hp').checked;
+        this.trainingSettings.infRage = document.getElementById('trn-inf-rage').checked;
+        this.trainingSettings.zeroCd = document.getElementById('trn-zero-cd').checked;
+        this.trainingSettings.dummyMode = document.getElementById('trn-dummy-mode').value;
+      },
+
+      resetTrainingPositions() {
+        SFX.play('ui');
+        this.p1.x = this.arena.width * 0.28;
+        this.p2.x = this.arena.width * 0.72;
+        this.p1.hp = this.p1.maxHp;
+        this.p2.hp = this.p2.maxHp;
+      },
+
+      populatePauseMoveLists(c1, c2) {
+        const renderBox = (c, tag) => `
+          <div class="text-xs font-black text-cyan-400 uppercase">${tag} • ${c.gen}</div>
+          <div class="font-title text-xl text-white">${c.name}</div>
+          <div class="text-slate-400 font-semibold mb-2">${c.styleName}</div>
+          <div class="bg-slate-950 p-2.5 rounded-lg border border-purple-500/30">
+            <div class="text-purple-300 font-bold">Nội Tại (Passive):</div>
+            <div class="text-slate-200 mt-0.5">${c.passiveVN}</div>
+          </div>
+          <div class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 space-y-2 mt-2">
+            <div><span class="text-cyan-300 font-bold">[U / Num 4] ${c.skills.u.name}:</span> <span class="text-slate-300">${c.skills.u.descVN}</span></div>
+            <div><span class="text-amber-300 font-bold">[I / Num 5] ${c.skills.i.name} (1 Thanh Nộ):</span> <span class="text-slate-300">${c.skills.i.descVN}</span></div>
+            <div><span class="text-pink-400 font-bold">[O / Num 6] ${c.skills.o.name} (3 Thanh Nộ):</span> <span class="text-slate-300">${c.skills.o.descVN}</span></div>
+          </div>
+        `;
+        document.getElementById('pause-p1-movelist').innerHTML = renderBox(c1, 'PLAYER 1');
+        document.getElementById('pause-p2-movelist').innerHTML = renderBox(c2, 'PLAYER 2 / CPU');
+      },
+
+      togglePause() {
+        if (!this.isRunning || this.matchOver) return;
+        SFX.play('ui');
+        this.isPaused = !this.isPaused;
+        document.getElementById('modal-pause').classList.toggle('hidden', !this.isPaused);
+        if (!this.isPaused) {
+          this.lastFrameTime = performance.now();
+          requestAnimationFrame((t) => this.gameLoop(t));
+        }
+      },
+
+      // ==================== INPUT HANDLING & ACTIONS ====================
+      handleSingleKeyPress(code) {
+        if (code === 'Escape') {
+          this.togglePause();
+          return;
+        }
+        if (!this.isRunning || this.isPaused || this.matchOver || this.freezeTimer > 0) return;
+
+        // PLAYER 1 SINGLE-TRIGGER ACTIONS
+        if (code === 'KeyW') this.tryJump(this.p1);
+        if (code === 'KeyJ') this.tryNormalCombo(this.p1, this.p2);
+        if (code === 'KeyK') this.tryHeavyLauncher(this.p1, this.p2);
+        if (code === 'KeyL') this.tryFlashDash(this.p1, this.p2);
+        if (code === 'KeyU') this.trySkillU(this.p1, this.p2);
+        if (code === 'KeyI') this.trySkillI(this.p1, this.p2);
+        if (code === 'KeyO') this.tryUltimateO(this.p1, this.p2);
+
+        // PLAYER 2 SINGLE-TRIGGER ACTIONS (When in VS_P2 or Custom P2 mode)
+        const isP2Human = this.mode === 'VS_P2' || (this.mode === 'CUSTOM' && this.customRules.opponent === 'P2');
+        if (isP2Human) {
+          if (code === 'ArrowUp') this.tryJump(this.p2);
+          if (code === 'Numpad1' || code === 'Digit1') this.tryNormalCombo(this.p2, this.p1);
+          if (code === 'Numpad2' || code === 'Digit2') this.tryHeavyLauncher(this.p2, this.p1);
+          if (code === 'Numpad3' || code === 'Digit3') this.tryFlashDash(this.p2, this.p1);
+          if (code === 'Numpad4' || code === 'Digit4') this.trySkillU(this.p2, this.p1);
+          if (code === 'Numpad5' || code === 'Digit5') this.trySkillI(this.p2, this.p1);
+          if (code === 'Numpad6' || code === 'Digit6') this.tryUltimateO(this.p2, this.p1);
+        }
+      },
+
+      processContinuousInputs() {
+        if (this.freezeTimer > 0) return;
+
+        // P1 Continuous Movement / Guard
+        this.applyFighterMovement(
+          this.p1,
+          this.p2,
+          this.keys['KeyA'],
+          this.keys['KeyD'],
+          this.keys['KeyS']
+        );
+
+        // P2 Continuous Movement / Guard OR AI Controller
+        const isP2Human = this.mode === 'VS_P2' || (this.mode === 'CUSTOM' && this.customRules.opponent === 'P2');
+        if (isP2Human) {
+          this.applyFighterMovement(
+            this.p2,
+            this.p1,
+            this.keys['ArrowLeft'],
+            this.keys['ArrowRight'],
+            this.keys['ArrowDown']
+          );
+        } else {
+          this.updateAI(this.p2, this.p1);
+        }
+      },
+
+      applyFighterMovement(f, enemy, leftHeld, rightHeld, downHeld) {
+        if (f.hitstunTimer > 0 || f.state === 'DASH' || f.state === 'SKILL' || f.state === 'ULTIMATE') return;
+
+        if (downHeld && f.y >= this.arena.groundY) {
+          if (f.state !== 'GUARD') f.guardStartTime = performance.now();
+          f.state = 'GUARD';
+          f.vx *= 0.5;
+          f.facing = enemy.x >= f.x ? 1 : -1;
+          return;
+        } else if (f.state === 'GUARD') {
+          f.state = 'IDLE';
+        }
+
+        if (f.state === 'ATTACK') return;
+
+        const spd = f.getSpeed();
+        if (leftHeld) {
+          f.vx = -spd;
+          f.facing = -1;
+          if (f.y >= this.arena.groundY) f.state = 'WALK';
+        } else if (rightHeld) {
+          f.vx = spd;
+          f.facing = 1;
+          if (f.y >= this.arena.groundY) f.state = 'WALK';
+        } else {
+          if (f.y >= this.arena.groundY && f.state === 'WALK') f.state = 'IDLE';
+        }
+      },
+
+      tryJump(f) {
+        if (f.hitstunTimer > 0 || f.state === 'SKILL' || f.state === 'ULTIMATE') return;
+        if (f.jumpsLeft > 0) {
+          f.vy = -14.2;
+          f.jumpsLeft--;
+          f.state = 'JUMP';
+          SFX.play('dash');
+          ArenaFX.spawnShockwave(f.x, f.y, '#94a3b8', 28);
+        }
+      },
+
+      tryFlashDash(f, enemy) {
+        if (f.hitstunTimer > 0 || f.stamina < 25) return;
+        f.stamina -= 25;
+        f.state = 'DASH';
+        f.stateTimer = 0.22;
+        f.invulnTimer = 0.24;
+        f.vx = f.facing * (f.data.id === 'james_lee' ? 22 : 18);
+        SFX.play('dash');
+
+        // Spawn 3 Neon Afterimages
+        for (let i = 0; i < 3; i++) {
+          f.afterimages.push({
+            x: f.x - f.facing * i * 18,
+            y: f.y,
+            facing: f.facing,
+            alpha: 0.75 - i * 0.18
+          });
+        }
+
+        // James Lee Passive: Dodging near an attacking enemy grants +20 Rage
+        if (f.data.id === 'james_lee' && (enemy.state === 'ATTACK' || enemy.state === 'SKILL') && Math.abs(f.x - enemy.x) < 190) {
+          f.addRage(20, this.customRules);
+          ArenaFX.spawnCallout(f.x, f.y - 95, 'THE PEAK EVADE! +20 RAGE', '#ff007f', 16);
+        }
+      },
+
+      // ==================== COMBAT ATTACKS & SKILLS ====================
+      tryNormalCombo(f, enemy) {
+        if (f.hitstunTimer > 0 || f.state === 'SKILL' || f.state === 'ULTIMATE' || f.state === 'DASH') return;
+        if (f.state === 'ATTACK' && f.stateTimer > 0.08) return; // Wait for current swing window
+
+        f.facing = enemy.x >= f.x ? 1 : -1;
+        f.comboStep = (f.comboStep % 4) + 1;
+        f.comboTimer = 0.75;
+        f.state = 'ATTACK';
+        const isFastKick = f.data.id === 'elite' || f.data.id === 'james_lee' || f.data.id === 'sinu_han';
+        constjayBonus = (f.data.id === 'jay_hong' && enemy.hp / enemy.maxHp > 0.5) ? 0.78 : 1;
+        f.stateTimer = (isFastKick ? 0.17 : 0.22) * thejayBonus(f, enemy);
+        f.vx = f.facing * 5.5;
+        f.lastNormalHitTime = performance.now();
+
+        const hasSword = f.data.visuals.weapon === 'katana' || f.data.visuals.weapon === 'muramasa';
+        SFX.play(hasSword ? 'slash' : (f.comboStep === 4 ? 'heavy' : 'punch'));
+
+        const reach = hasSword ? 135 : 105;
+        const baseDmg = f.comboStep === 4 ? 75 : 42;
+        const kb = f.comboStep === 4 ? 11 : 4.2;
+
+        if (hasSword || f.data.animStyle === 'invisible') {
+          ArenaFX.spawnSlashArc(f.x + f.facing * 35, f.y - 48, f.facing, f.data.visuals.auraColor, 55);
+        }
+
+        this.checkHitbox(f, enemy, reach, baseDmg, kb, f.comboStep === 4 ? -6 : -1.5, false, false, f.comboStep === 1);
+      },
+
+      tryHeavyLauncher(f, enemy) {
+        if (f.hitstunTimer > 0 || f.state === 'SKILL' || f.state === 'ULTIMATE' || f.stateTimer > 0.05) return;
+        f.facing = enemy.x >= f.x ? 1 : -1;
+        f.state = 'ATTACK';
+        f.comboStep = 4;
+        f.stateTimer = 0.32;
+        f.vx = f.facing * 8;
+
+        // Gun Park Super Armor on Heavy Strike
+        if (f.data.id === 'gun_park') f.invulnTimer = 0.25;
+
+        SFX.play('heavy');
+        ArenaFX.spawnSlashArc(f.x + f.facing * 40, f.y - 52, f.facing, f.data.visuals.auraColor, 68);
+        this.checkHitbox(f, enemy, 120, 95, 8.5, -11.5, false, false, false);
+      },
+
+      trySkillU(f, enemy) {
+        if (f.hitstunTimer > 0 || f.cdU > 0 || f.state === 'ULTIMATE') return;
+        const sk = f.data.skills.u;
+        f.cdU = sk.cd;
+        f.facing = enemy.x >= f.x ? 1 : -1;
+        f.state = 'SKILL';
+        f.stateTimer = 0.36;
+
+        // Jinyoung Park Passive: Random Mastery Buff
+        if (f.data.id === 'jinyoung') {
+          f.buffTimer = 5.0;
+          ArenaFX.spawnCallout(f.x, f.y - 110, 'GEN 0 COPY BUFF!', '#ff007f', 16);
+        }
+
+        // English Skill Shoutout
+        ArenaFX.spawnCallout(f.x, f.y - 88, sk.name.toUpperCase() + '!', f.data.visuals.auraColor, 20);
+        SFX.play(f.data.visuals.weapon === 'katana' || f.data.visuals.weapon === 'muramasa' ? 'slash' : 'heavy');
+
+        if (sk.type === 'teleport_kick') {
+          f.x = Math.max(60, Math.min(this.arena.width - 60, enemy.x - f.facing * 55));
+          for (let i = 0; i < 3; i++) f.afterimages.push({ x: f.x - f.facing * i * 25, y: f.y, facing: f.facing, alpha: 0.7 });
+        } else {
+          f.vx = f.facing * 13;
+        }
+
+        const isGuardBreak = sk.type === 'guardbreak_lunge';
+        let dmg = sk.dmg;
+        // Daniel OG Feint Passive (+20% skill dmg right after normal attack)
+        if (f.data.id === 'daniel_og' && performance.now() - f.lastNormalHitTime < 900) {
+          dmg *= 1.2;
+          ArenaFX.spawnCallout(f.x, f.y - 112, "FOOL'S GENIUS FEINT! +20%", '#38bdf8', 16);
+        }
+
+        ArenaFX.spawnShockwave(f.x + f.facing * 45, f.y - 45, f.data.visuals.auraColor, 75);
+        this.checkHitbox(f, enemy, sk.range, dmg, 10, -7, isGuardBreak, false, false);
+      },
+
+      trySkillI(f, enemy) {
+        if (f.hitstunTimer > 0 || f.cdI > 0 || f.rage < 100 || f.state === 'ULTIMATE') return;
+        const sk = f.data.skills.i;
+        f.rage -= 100;
+        f.cdI = sk.cd;
+        f.facing = enemy.x >= f.x ? 1 : -1;
+        f.state = 'SKILL';
+        f.stateTimer = 0.44;
+
+        if (f.data.id === 'jinyoung' || f.data.id === 'yohan') {
+          f.buffTimer = 6.0;
+        }
+
+        // English Skill Shoutout
+        ArenaFX.spawnCallout(f.x, f.y - 92, sk.name.toUpperCase() + '!', '#ffbe0b', 22);
+        SFX.play('guardbreak');
+
+        if (sk.type === 'teleport_kick') {
+          f.x = Math.max(60, Math.min(this.arena.width - 60, enemy.x + f.facing * 45));
+          f.facing = -f.facing;
+        } else {
+          f.vx = f.facing * 15;
+        }
+
+        const isGrab = sk.type === 'command_grab';
+        const isGuardBreak = sk.type === 'guardbreak_lunge' || isGrab;
+        let dmg = sk.dmg;
+        if (f.data.id === 'daniel_og' && performance.now() - f.lastNormalHitTime < 900) dmg *= 1.2;
+
+        ArenaFX.spawnShockwave(f.x + f.facing * 50, f.y - 50, f.data.visuals.auraColor, 105);
+        ArenaFX.spawnSlashArc(f.x + f.facing * 50, f.y - 50, f.facing, '#ffbe0b', 85);
+        this.checkHitbox(f, enemy, sk.range, dmg, 14, -9.5, isGuardBreak, isGrab, false);
+      },
+
+      tryUltimateO(f, enemy) {
+        if (f.hitstunTimer > 0 || f.cdO > 0 || f.rage < 300) return;
+        const sk = f.data.skills.o;
+        f.rage = 0;
+        f.cdO = sk.cd;
+        f.facing = enemy.x >= f.x ? 1 : -1;
+        f.state = 'ULTIMATE';
+        f.stateTimer = 0.9;
+        f.invulnTimer = 1.0;
+        f.ultTimer = 6.0; // Keep awakened visual state for 6s
+
+        // Trigger 0.6s BVN Screen Freeze & English Anime Cut-in Banner
+        this.freezeTimer = 0.62;
+        ArenaFX.ultDarknessTimer = 1.3;
+        SFX.play('ult_freeze');
+
+        const cutin = document.getElementById('ultimate-cutin');
+        const bar = document.getElementById('ultimate-cutin-bar');
+        document.getElementById('cutin-char-name').textContent = `${f.data.name.toUpperCase()} • ${f.data.gen}`;
+        document.getElementById('cutin-skill-name').textContent = sk.name;
+        cutin.classList.remove('hidden');
+        bar.classList.remove('cutin-active');
+        void bar.offsetWidth; // Reflow
+        bar.classList.add('cutin-active');
+        setTimeout(() => cutin.classList.add('hidden'), 900);
+
+        // Execute Massive Ultimate Hit after freeze
+        setTimeout(() => {
+          if (!this.isRunning) return;
+          SFX.play('ult_boom');
+          ArenaFX.triggerShake(22, 0.45);
+          // Gap-close to enemy
+          if (Math.abs(f.x - enemy.x) > 160) {
+            f.x = Math.max(70, Math.min(this.arena.width - 70, enemy.x - f.facing * 90));
+          }
+          ArenaFX.spawnShockwave(enemy.x, enemy.y - 50, f.data.visuals.auraColor, 220);
+          ArenaFX.spawnHitSparks(enemy.x, enemy.y - 50, f.data.visuals.auraColor, 38);
+          ArenaFX.spawnCallout(f.x, f.y - 110, sk.name + '!', '#ffbe0b', 24);
+          this.checkHitbox(f, enemy, 420, sk.dmg, 19, -13, true, true, false);
+        }, 550);
+      },
+
+      checkHitbox(attacker, defender, range, baseDmg, knockbackX, knockbackY, isGuardBreak, isUnblockableGrab, isLightFirstHit) {
+        const dx = defender.x - attacker.x;
+        const dy = Math.abs(defender.y - attacker.y);
+        const inFront = (attacker.facing === 1 && dx >= -35 && dx <= range) ||
+                        (attacker.facing === -1 && dx <= 35 && dx >= -range);
+
+        if (!inFront || dy > 110 || defender.invulnTimer > 0) return;
+
+        let dmg = baseDmg * attacker.getAttackMultiplier(defender) / defender.data.stats.def;
+
+        // Shingen Passive: Black Bone reduces weapon slash damage by 25%
+        const attackerHasBlade = ['katana', 'muramasa', 'axe'].includes(attacker.data.visuals.weapon);
+        if (defender.data.id === 'shingen' && attackerHasBlade) {
+          dmg *= 0.75;
+        }
+        // Shintaro Passive: Muramasa ignores 30% defense
+        if (attacker.data.id === 'shintaro') {
+          dmg *= 1.22;
+        }
+
+        // Check Blocking / Guarding
+        let blocked = defender.state === 'GUARD' && defender.facing !== attacker.facing;
+
+        // Vin Jin Passive: Unblockable Grabs
+        if (isUnblockableGrab && attacker.data.id === 'vin_jin') {
+          blocked = false;
+          ArenaFX.spawnCallout(defender.x, defender.y - 95, 'BONE GRIP! UNBLOCKABLE!', '#dc2626', 18);
+        }
+        // Elite Passive: 20% chance to pierce guard
+        if (blocked && attacker.data.id === 'elite' && Math.random() < 0.22) {
+          blocked = false;
+          ArenaFX.spawnCallout(defender.x, defender.y - 95, 'BLIND SPOT PIERCE!', '#00f0ff', 18);
+        }
+        // Shingen Passive: Chance to break guard
+        if (blocked && attacker.data.id === 'shingen' && Math.random() < 0.25) {
+          isGuardBreak = true;
+        }
+
+        if (blocked) {
+          // Daniel Perfect Body: Perfect Guard if blocked within 180ms
+          if (defender.data.id === 'daniel_pb' && performance.now() - defender.guardStartTime < 180) {
+            SFX.play('block');
+            ArenaFX.spawnCallout(defender.x, defender.y - 95, 'PERFECT GUARD COUNTER!', '#00f0ff', 20);
+            attacker.hp = Math.max(1, attacker.hp - 85);
+            attacker.vx = -attacker.facing * 10;
+            attacker.hitstunTimer = 0.3;
+            return;
+          }
+
+          // Vasco Passive: 2x Stamina/Guard damage
+          const stamDrain = attacker.data.id === 'vasco' ? 36 : 18;
+          defender.stamina -= stamDrain;
+
+          if (isGuardBreak || defender.stamina <= 0) {
+            defender.stamina = 0;
+            defender.state = 'HIT';
+            defender.hitstunTimer = 0.55;
+            SFX.play('guardbreak');
+            ArenaFX.spawnCallout(defender.x, defender.y - 95, 'GUARD BREAK!', '#ff2a2a', 24);
+            ArenaFX.spawnShockwave(defender.x, defender.y - 50, '#ff2a2a', 90);
+          } else {
+            // Normal Block (80% reduction, Zack Lee 90% reduction + reflect)
+            SFX.play('block');
+            let blockMult = 0.2;
+            if (defender.data.id === 'zack_lee') {
+              blockMult = 0.1;
+              attacker.hp = Math.max(1, attacker.hp - dmg * 0.15);
+              ArenaFX.spawnCallout(defender.x, defender.y - 85, 'IRON FORTRESS!', '#10b981', 16);
+            }
+            if (attacker.data.id === 'kitae') {
+              blockMult = 0.4; // Kitae 40% pierce through guard
+            }
+            defender.hp = Math.max(0, defender.hp - Math.round(dmg * blockMult));
+            defender.vx = attacker.facing * 4;
+            ArenaFX.spawnHitSparks(defender.x, defender.y - 48, '#38bdf8', 8);
+            return;
+          }
+        }
+
+        // Yohan Seong Passive: Infinite Technique bonus afterimage strike
+        if (attacker.data.id === 'yohan') {
+          dmg *= 1.15;
+          ArenaFX.spawnSlashArc(defender.x, defender.y - 50, attacker.facing, '#fbbf24', 50);
+        }
+
+        // Paecheon Jo Consume Charge
+        if (attacker.data.id === 'paecheon' && attacker.paecheonCharge >= 1.2) {
+          attacker.paecheonCharge = 0;
+          ArenaFX.spawnCallout(attacker.x, attacker.y - 100, 'IRON PALM RELEASE!', '#f59e0b', 18);
+        }
+
+        // Changsu Oh Stacks
+        if (attacker.data.id === 'changsu_oh') {
+          attacker.changsuStacks++;
+          if (attacker.changsuStacks >= 5) {
+            attacker.changsuStacks = 0;
+            defender.hitstunTimer += 0.45;
+            ArenaFX.spawnCallout(defender.x, defender.y - 100, 'IRON FIST STUN!', '#ea580c', 18);
+          }
+        }
+
+        // Bleed Passives (Tom Lee, Goo Kim, Eli Jang)
+        if (['tom_lee', 'goo_kim', 'eli_jang'].includes(attacker.data.id)) {
+          defender.bleedTimer = 3.0;
+        }
+
+        // Slow Passives (Sinu Han 4th hit, Yujae Seon)
+        if ((attacker.data.id === 'sinu_han' && attacker.comboStep === 4) || attacker.data.id === 'yujae_seon') {
+          defender.slowTimer = 3.0;
+        }
+
+        // Samuel Seo Heat Mode (Gains Heat when taking hits, lifesteals when attacking)
+        if (defender.data.id === 'samuel_seo') {
+          defender.samuelHeat = Math.min(8, defender.samuelHeat + 1);
+        }
+        if (attacker.data.id === 'samuel_seo' && attacker.samuelHeat > 0) {
+          attacker.hp = Math.min(attacker.maxHp, attacker.hp + dmg * 0.12);
+        }
+
+        // Apply Final Damage
+        const finalDmg = Math.round(dmg);
+        defender.hp = Math.max(0, defender.hp - finalDmg);
+
+        // Olly Wang Passive: Congenital Analgesia ignores light first hitstun
+        const ignoreStun = (defender.data.id === 'olly_wang' && isLightFirstHit) ||
+                           (defender.data.id === 'jinrang' && isLightFirstHit && Math.abs(attacker.x - defender.x) < 120);
+
+        if (!ignoreStun) {
+          defender.state = 'HIT';
+          defender.hitstunTimer = 0.36;
+          defender.vx = attacker.facing * knockbackX;
+          defender.vy = knockbackY;
+        } else {
+          ArenaFX.spawnCallout(defender.x, defender.y - 90, 'UNFAZED!', '#a855f7', 15);
+        }
+
+        // Rage Gain
+        attacker.addRage(18, this.customRules);
+        defender.addRage(12, this.customRules);
+
+        // Combo & Training DPS Tracking
+        if (attacker.currentComboHits === 0) {
+          this.trainingSettings.comboStartTime = performance.now();
+        }
+        attacker.currentComboHits++;
+        attacker.maxComboHits = Math.max(attacker.maxComboHits, attacker.currentComboHits);
+        attacker.comboDamageAccum += finalDmg;
+        attacker.lastHitDamage = finalDmg;
+
+        // Micro Hit-Stop & Sparks on Heavy Impacts
+        if (finalDmg > 85) {
+          ArenaFX.triggerHitStop(0.045);
+          ArenaFX.triggerShake(7, 0.12);
+        }
+        ArenaFX.spawnHitSparks(defender.x, defender.y - 48, attacker.data.visuals.auraColor, 15);
+        ArenaFX.spawnCallout(defender.x + (Math.random() - 0.5) * 30, defender.y - 65, `-${finalDmg}`, '#ffffff', 16);
+      },
+
+      // ==================== ADAPTIVE AI CONTROLLER ====================
+      updateAI(ai, target) {
+        if (ai.hitstunTimer > 0 || ai.state === 'SKILL' || ai.state === 'ULTIMATE' || ai.state === 'DASH') return;
+
+        // Training Mode Dummy Overrides
+        if (this.mode === 'TRAINING') {
+          const dMode = this.trainingSettings.dummyMode;
+          if (dMode === 'STAND') {
+            ai.state = 'IDLE';
+            return;
+          } else if (dMode === 'CROUCH') {
+            ai.state = 'IDLE';
+            ai.facing = target.x >= ai.x ? 1 : -1;
+            return;
+          } else if (dMode === 'GUARD') {
+            ai.state = 'GUARD';
+            ai.facing = target.x >= ai.x ? 1 : -1;
+            return;
+          }
+          // If 'FIGHT', fall through to active AI
+        }
+
+        const dist = Math.abs(target.x - ai.x);
+        ai.facing = target.x >= ai.x ? 1 : -1;
+
+        // Aggression scales with AI Difficulty (0: Easy, 1: Normal, 2: Hard, 3: God Dog/Legend)
+        const reactChance = [0.015, 0.035, 0.065, 0.12][this.aiDifficulty] || 0.04;
+
+        // Defensive Guard / Flash Dash when target attacks
+        if ((target.state === 'ATTACK' || target.state === 'SKILL') && dist < 160) {
+          if (Math.random() < reactChance * 1.4) {
+            if (this.aiDifficulty >= 2 && ai.stamina >= 30 && Math.random() < 0.4) {
+              this.tryFlashDash(ai, target);
+            } else {
+              ai.state = 'GUARD';
+            }
+            return;
+          }
+        }
+
+        // Approach Target
+        if (dist > 115) {
+          if (dist > 260 && Math.random() < reactChance * 0.5 && ai.cdU <= 0) {
+            this.trySkillU(ai, target);
+            return;
+          }
+          if (dist > 300 && ai.stamina > 50 && Math.random() < reactChance * 0.4) {
+            this.tryFlashDash(ai, target);
+            return;
+          }
+          ai.vx = ai.facing * ai.getSpeed();
+          if (ai.y >= this.arena.groundY) ai.state = 'WALK';
+        } else {
+          // Close Range Combat Decisions
+          if (ai.rage >= 300 && ai.cdO <= 0 && Math.random() < reactChance * 1.8) {
+            this.tryUltimateO(ai, target);
+          } else if (ai.rage >= 100 && ai.cdI <= 0 && Math.random() < reactChance * 1.3) {
+            this.trySkillI(ai, target);
+          } else if (ai.cdU <= 0 && Math.random() < reactChance * 1.2) {
+            this.trySkillU(ai, target);
+          } else if (Math.random() < reactChance * 2.2) {
+            if (Math.random() < 0.22) this.tryHeavyLauncher(ai, target);
+            else this.tryNormalCombo(ai, target);
+          } else {
+            ai.state = 'IDLE';
+          }
+        }
+      },
+
+      // ==================== MAIN GAME LOOP & RENDERING ====================
+      gameLoop(timestamp) {
+        if (!this.isRunning || this.isPaused) return;
+
+        let dt = (timestamp - this.lastFrameTime) / 1000;
+        this.lastFrameTime = timestamp;
+        if (dt > 0.08) dt = 0.08;
+
+        // Screen Freeze (Ultimate Cut-in) or Hit-Stop
+        if (this.freezeTimer > 0) {
+          this.freezeTimer = Math.max(0, this.freezeTimer - dt);
+          this.renderArena();
+          requestAnimationFrame((t) => this.gameLoop(t));
+          return;
+        }
+        if (ArenaFX.hitStopTimer > 0) {
+          ArenaFX.hitStopTimer = Math.max(0, ArenaFX.hitStopTimer - dt);
+          this.renderArena();
+          requestAnimationFrame((t) => this.gameLoop(t));
+          return;
+        }
+
+        // Training Mode Overrides
+        if (this.mode === 'TRAINING') {
+          if (this.trainingSettings.infHp) {
+            this.p1.hp = this.p1.maxHp;
+            this.p2.hp = this.p2.maxHp;
+          }
+          if (this.trainingSettings.infRage) {
+            this.p1.rage = 300;
+            this.p2.rage = 300;
+          }
+          if (this.trainingSettings.zeroCd) {
+            this.p1.cdU = 0; this.p1.cdI = 0; this.p1.cdO = 0;
+          }
+        }
+
+        // Match Timer Countdown
+        if (this.matchTimer > 0 && !this.matchOver) {
+          this.matchTimer -= dt;
+          if (this.matchTimer <= 0) {
+            this.matchTimer = 0;
+            this.concludeMatch();
+          }
+        }
+
+        this.processContinuousInputs();
+        this.p1.update(dt, this.p2, this.arena, this.customRules);
+        this.p2.update(dt, this.p1, this.arena, this.customRules);
+        ArenaFX.update(dt);
+
+        // Check K.O.
+        if (!this.matchOver && (this.p1.hp <= 0 || this.p2.hp <= 0)) {
+          this.concludeMatch();
+        }
+
+        this.updateHUD();
+        this.renderArena();
+
+        requestAnimationFrame((t) => this.gameLoop(t));
+      },
+
+      concludeMatch() {
+        this.matchOver = true;
+        SFX.play('ult_boom');
+        ArenaFX.triggerShake(18, 0.4);
+
+        const p1Won = this.p1.hp >= this.p2.hp;
+        const winner = p1Won ? this.p1 : this.p2;
+        ArenaFX.spawnCallout(this.arena.width / 2, this.arena.height * 0.4, 'K.O.!', '#ff2a2a', 64);
+
+        setTimeout(() => {
+          document.getElementById('ko-winner-title').textContent = `${winner.data.name.toUpperCase()} WINS!`;
+          document.getElementById('ko-winner-sub').textContent = `${winner.data.gen} • ${winner.data.styleName}`;
+          document.getElementById('ko-stat-combo').textContent = `${Math.max(1, winner.maxComboHits)} HITS`;
+          document.getElementById('ko-stat-hp').textContent = `${Math.round((winner.hp / winner.maxHp) * 100)}%`;
+          document.getElementById('modal-gameover').classList.remove('hidden');
+        }, 1100);
+      },
+
+      updateHUD() {
+        // P1 & P2 HP
+        const p1Pct = Math.max(0, (this.p1.hp / this.p1.maxHp) * 100);
+        const p1DrainPct = Math.max(0, (this.p1.drainHp / this.p1.maxHp) * 100);
+        document.getElementById('hud-p1-hp-fill').style.width = `${p1Pct}%`;
+        document.getElementById('hud-p1-hp-drain').style.width = `${p1DrainPct}%`;
+        document.getElementById('hud-p1-hp-text').textContent = `${Math.ceil(this.p1.hp)} / ${this.p1.maxHp}`;
+
+        const p2Pct = Math.max(0, (this.p2.hp / this.p2.maxHp) * 100);
+        const p2DrainPct = Math.max(0, (this.p2.drainHp / this.p2.maxHp) * 100);
+        document.getElementById('hud-p2-hp-fill').style.width = `${p2Pct}%`;
+        document.getElementById('hud-p2-hp-drain').style.width = `${p2DrainPct}%`;
+        document.getElementById('hud-p2-hp-text').textContent = `${Math.ceil(this.p2.hp)} / ${this.p2.maxHp}`;
+
+        // Stamina & Status
+        document.getElementById('hud-p1-stam-fill').style.width = `${this.p1.stamina}%`;
+        document.getElementById('hud-p2-stam-fill').style.width = `${this.p2.stamina}%`;
+        document.getElementById('hud-p1-status').textContent = this.p1.getActivePassiveText(this.p2);
+        document.getElementById('hud-p2-status').textContent = this.p2.getActivePassiveText(this.p1);
+
+        // Timer
+        document.getElementById('hud-timer').textContent = this.matchTimer < 0 ? '∞' : Math.ceil(this.matchTimer);
+
+        // 3-Bar Rage Gauges
+        this.updateRageBars('p1', this.p1);
+        this.updateRageBars('p2', this.p2);
+
+        // Combo Banners
+        const cBox1 = document.getElementById('p1-combo-box');
+        if (this.p1.currentComboHits >= 2) {
+          cBox1.style.opacity = '1';
+          document.getElementById('p1-combo-count').textContent = `${this.p1.currentComboHits} HITS!`;
+        } else {
+          cBox1.style.opacity = '0';
+        }
+
+        const cBox2 = document.getElementById('p2-combo-box');
+        if (this.p2.currentComboHits >= 2) {
+          cBox2.style.opacity = '1';
+          document.getElementById('p2-combo-count').textContent = `${this.p2.currentComboHits} HITS!`;
+        } else {
+          cBox2.style.opacity = '0';
+        }
+
+        // Training DPS Tracker
+        if (this.mode === 'TRAINING') {
+          document.getElementById('trn-last-dmg').textContent = this.p1.lastHitDamage;
+          document.getElementById('trn-combo-dmg').textContent = this.p1.comboDamageAccum;
+          const elapsed = Math.max(0.5, (performance.now() - this.trainingSettings.comboStartTime) / 1000);
+          const dps = this.p1.comboDamageAccum > 0 ? Math.round(this.p1.comboDamageAccum / elapsed) : 0;
+          document.getElementById('trn-dps').textContent = dps;
+        }
+      },
+
+      updateRageBars(prefix, f) {
+        const bars = Math.floor(f.rage / 100);
+        document.getElementById(`hud-${prefix}-rage-bars`).textContent = bars;
+        document.getElementById(`hud-${prefix}-rage-1`).style.width = `${Math.min(100, f.rage)}%`;
+        document.getElementById(`hud-${prefix}-rage-2`).style.width = `${Math.max(0, Math.min(100, f.rage - 100))}%`;
+        document.getElementById(`hud-${prefix}-rage-3`).style.width = `${Math.max(0, Math.min(100, f.rage - 200))}%`;
+
+        const uKey = prefix === 'p1' ? 'U' : '4';
+        const iKey = prefix === 'p1' ? 'I' : '5';
+        const oKey = prefix === 'p1' ? 'O' : '6';
+
+        document.getElementById(`hud-${prefix}-u-badge`).textContent =
+          f.cdU > 0 ? `${uKey}: ${f.cdU.toFixed(1)}s` : `${uKey}: READY`;
+        document.getElementById(`hud-${prefix}-i-badge`).textContent =
+          f.cdI > 0 ? `${iKey}: ${f.cdI.toFixed(1)}s` : (f.rage >= 100 ? `${iKey}: READY!` : `${iKey}: 1 BAR`);
+        document.getElementById(`hud-${prefix}-o-badge`).textContent =
+          f.cdO > 0 ? `${oKey}: ${f.cdO.toFixed(1)}s` : (f.rage >= 300 ? `${oKey}: AWAKEN READY!` : `${oKey}: 3 BARS`);
+      },
+
+      renderArena() {
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const w = this.arena.width;
+        const h = this.arena.height;
+        const gy = this.arena.groundY;
+
+        ctx.save();
+
+        // Screen Shake Offset
+        if (ArenaFX.shakeTime > 0) {
+          const sx = (Math.random() - 0.5) * ArenaFX.shakeMag;
+          const sy = (Math.random() - 0.5) * ArenaFX.shakeMag;
+          ctx.translate(sx, sy);
+        }
+
+        // 1. Draw Stage Background
+        this.drawStageBackground(ctx, w, h, gy);
+
+        // Ultimate Awakening Dimmed Background
+        if (ArenaFX.ultDarknessTimer > 0) {
+          ctx.fillStyle = `rgba(3, 4, 10, ${Math.min(0.82, ArenaFX.ultDarknessTimer)})`;
+          ctx.fillRect(0, 0, w, h);
+        }
+
+        // 2. Draw Fighter Afterimages
+        [this.p1, this.p2].forEach(f => {
+          f.afterimages.forEach(img => {
+            ctx.save();
+            ctx.globalAlpha = img.alpha * 0.45;
+            StickmanRenderer.drawFighter(ctx, f, img.x, img.y, img.facing, 1.0, true);
+            ctx.restore();
+          });
+        });
+
+        // 3. Draw P1 & P2 Stickman Fighters
+        StickmanRenderer.drawFighter(ctx, this.p1, this.p1.x, this.p1.y, this.p1.facing, 1.08);
+        StickmanRenderer.drawFighter(ctx, this.p2, this.p2.x, this.p2.y, this.p2.facing, 1.08);
+
+        // 4. Draw Particles, Slashes & English Combat Callouts
+        ArenaFX.render(ctx);
+
+        ctx.restore();
+      },
+
+      drawStageBackground(ctx, w, h, gy) {
+        const themes = [
+          { sky1: '#070913', sky2: '#131b2e', floor: '#0f131f', line: '#00f0ff', accent: '#ff007f', moon: '#e2e8f0' }, // Seoul Rainy Alley
+          { sky1: '#09070e', sky2: '#24122d', floor: '#140d1a', line: '#f59e0b', accent: '#9d4edd', moon: '#fbbf24' }, // Workers 1A Arena
+          { sky1: '#06110e', sky2: '#112a24', floor: '#0c1a16', line: '#10b981', accent: '#dc2626', moon: '#fef08a' }, // Cheonliang Shrine
+          { sky1: '#0a0f18', sky2: '#1e293b', floor: '#111827', line: '#9d4edd', accent: '#38bdf8', moon: '#cbd5e1' }, // Busan Docks
+          { sky1: '#160408', sky2: '#3b0811', floor: '#180609', line: '#ef4444', accent: '#10b981', moon: '#dc2626' }  // Yamazaki Blood Moon
+        ];
+        const t = themes[this.stageIndex] || themes[0];
+
+        // Sky Gradient
+        const grad = ctx.createLinearGradient(0, 0, 0, gy);
+        grad.addColorStop(0, t.sky1);
+        grad.addColorStop(1, t.sky2);
+        ctx.fillStyle = grad;
+        ctx.fillRect(0, 0, w, gy);
+
+        // Moon / Spotlight
+        ctx.fillStyle = t.moon + '33';
+        ctx.beginPath();
+        ctx.arc(w * 0.5, gy * 0.32, 95, 0, Math.PI * 2);
+        ctx.fill();
+
+        // City / Architecture Silhouettes
+        ctx.fillStyle = '#060810';
+        for (let i = 0; i < 12; i++) {
+          const bw = w / 11;
+          const bh = 90 + ((i * 53) % 140);
+          ctx.fillRect(i * bw - 10, gy - bh, bw - 8, bh);
+        }
+
+        // Ground Floor
+        ctx.fillStyle = t.floor;
+        ctx.fillRect(0, gy, w, h - gy);
+
+        // Glowing Horizon Line
+        ctx.strokeStyle = t.line;
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.moveTo(0, gy);
+        ctx.lineTo(w, gy);
+        ctx.stroke();
+      }
+    };
+
+    function thejayBonus(f, enemy) {
+      return (f.data.id === 'jay_hong' && enemy.hp / enemy.maxHp > 0.5) ? 0.78 : 1.0;
+    }
+
+    window.onload = function () {
+      GameApp.init();
+    };
+  </script>
+</body>
+</html>
